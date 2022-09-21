@@ -1,0 +1,21 @@
+protected int writeTopDICT() throws IOException{
+    Map<String, DICTEntry> topDICT = cffReader.getTopDictEntries();
+    List<String> topDictStringEntries = Arrays.asList("version", "Notice", "Copyright", "FullName", "FamilyName", "Weight", "PostScript");
+    ByteArrayOutputStream dict = new ByteArrayOutputStream();
+    for (Map.Entry<String, DICTEntry> dictEntry : topDICT.entrySet()) {
+        String dictKey = dictEntry.getKey();
+        DICTEntry entry = dictEntry.getValue();
+        if (dictKey.equals("ROS")) {
+            dict.write(writeROSEntry(entry));
+        } else if (dictKey.equals("CIDCount")) {
+            dict.write(writeCIDCount(entry));
+        } else if (topDictStringEntries.contains(dictKey)) {
+            dict.write(writeTopDictStringEntry(entry));
+        } else {
+            dict.write(entry.getByteData());
+        }
+    }
+    byte[] topDictIndex = cffReader.getTopDictIndex().getByteData();
+    int offSize = topDictIndex[2];
+    return writeIndex(Arrays.asList(dict.toByteArray()), offSize) - dict.size();
+}
