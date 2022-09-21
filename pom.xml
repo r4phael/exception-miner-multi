@@ -43,7 +43,7 @@
 			<artifactId>javalexer</artifactId>
 			<version>1</version>
             <scope>system</scope>
-            <systemPath>/home/r4ph21/desenv/java-parser/lib/javalexer.jar</systemPath>
+            <systemPath>/home/r4ph21/desenv/exception-miner/lib/javalexer.jar</systemPath>
 		</dependency>
 
 

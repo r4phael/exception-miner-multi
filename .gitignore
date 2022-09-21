@@ -1,4 +1,10 @@
-target
+__pycache__
+
+/target
+/projects
+
 .idea
 *.iml
-output
+.ipynb*
+*.log
+*env
