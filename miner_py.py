@@ -111,6 +111,11 @@ def preprocess():
 
     print(task1)
     print(task2)
+    print('Saving pickle datasets ...')
+
+    os.makedirs('output/py/data', exist_ok=True)
+    task1.to_pickle('output/py/data/task1.pkl')
+    task2.to_pickle('output/py/data/task2.pkl')
 
 
 if __name__ == '__main__':
