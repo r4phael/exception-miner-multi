@@ -17,9 +17,10 @@ class TryDatasetGenerator():
         self.reset()
 
     def reset(self):
+        self.indentation_counter = 0
         self.lines = []
         self.labels = []
-        self.indent_count = 0
+        self.has_catch = False
         self.start_function_def = False
         self.try_reached = False
 
@@ -47,13 +48,19 @@ class TryDatasetGenerator():
 
     def clear_line_buffer(self):
         if len(self.token_buffer) != 0:
-            self.lines.append(' '.join(self.token_buffer))
+            if self.try_reached:
+                indentation = (self.indentation_counter - 1) * '\t'
+            else:
+                indentation = self.indentation_counter * '\t'
+
+            self.lines.append(indentation +
+                              ' '.join(self.token_buffer))
             self.labels.append(1 if self.try_reached else 0)
         self.token_buffer = []
 
     def end_of_generation(self):
         res = {
-            'hasCatch': 1 if sum(self.labels) != 0 else 0,
+            'hasCatch': 1 if self.has_catch else 0,
             'lines': self.lines,
             'labels': self.labels
         }
@@ -65,9 +72,21 @@ class TryDatasetGenerator():
     def get_try_slice(self, node: ast.FunctionDef):
         for n in ast.walk(node):
             if isinstance(n, ast.Try):
-                if len(n.handlers) == 0:
+                self.has_catch = len(n.handlers) != 0
+                if not self.has_catch:
                     return None
                 return [n.lineno, n.handlers[0].lineno]
+
+    def handle_indentation(self, token_info: tokenize.TokenInfo):
+        if (token_info.type == token.INDENT):
+            self.indentation_counter += 1
+            return True
+
+        if (token_info.type == token.DEDENT):
+            self.indentation_counter -= 1
+            self.indentation_counter = max(self.indentation_counter, 0)
+            return True
+        return False
 
     def tokenize_function_def(self, node: ast.FunctionDef):
         assert node is not None
@@ -78,7 +97,6 @@ class TryDatasetGenerator():
             return None
 
         unparsed_code = astunparse.unparse(node)
-
         for token_info in tokenize.generate_tokens(io.StringIO(unparsed_code).readline):
             if token_info.line != self.current_line:
                 self.clear_line_buffer()
@@ -97,4 +115,5 @@ class TryDatasetGenerator():
             if (token_info.type == token.ENDMARKER):
                 return self.end_of_generation()
 
-            self.token_buffer.append(token_info.string)
+            if (not self.handle_indentation(token_info)):
+                self.token_buffer.append(token_info.string)

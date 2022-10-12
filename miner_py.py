@@ -8,9 +8,9 @@ from tqdm import tqdm
 #from subprocess import call
 from subprocess import PIPE, run, call
 from pydriller import Git
-from dataset_generators_py.task1_dataset_generator import TryDatasetGenerator
-from dataset_generators_py.task2_dataset_generator import ExceptDatasetGenerator
-from miner_py_utils import has_except
+from miner_py_src.dataset_generators_py.task1_dataset_generator import TryDatasetGenerator
+from miner_py_src.dataset_generators_py.task2_dataset_generator import ExceptDatasetGenerator
+from miner_py_src.miner_py_utils import has_except
 from utils import create_logger
 
 logger = create_logger("exception_py_miner", "exception_py_miner.log")
@@ -68,8 +68,8 @@ def fetch_repositories():
 
                 except Exception as e:
                     f.close()
-                    print("###### Error!!! in project {0} and file: {1}. exception: ##########".format(
-                        project, file, str(e)))
+                    print(
+                        f"###### Error!!! in project {project} and file: {file}. exception: {str(e)} ##########")
 
 
 def preprocess():
@@ -90,7 +90,7 @@ def preprocess():
                 tree = ast.parse(content)
             except SyntaxError as e:
                 print(
-                    f"###### SyntaxError Error!!! in project {project} and file: {file}.\n{str(e)}")
+                    f"###### SyntaxError Error!!! file: {file}.\n{str(e)}")
                 continue
             func_defs = [f for f in ast.walk(
                 tree) if isinstance(f, ast.FunctionDef)]

@@ -21,6 +21,7 @@ class ExceptDatasetGenerator():
         self.except_lines = []
 
         self.current_line = None
+        self.indentation_counter = 0
         self.token_buffer = []
 
     def generate(self):
@@ -46,7 +47,9 @@ class ExceptDatasetGenerator():
         if len(self.token_buffer) == 0:
             return
 
-        tokenized_line = ' '.join(self.token_buffer)
+        indentation = self.indentation_counter * '\t'
+
+        tokenized_line = indentation + ' '.join(self.token_buffer)
         self.token_buffer = []
 
         if self.except_reached:
@@ -73,6 +76,17 @@ class ExceptDatasetGenerator():
                     if tok.type not in [token.NEWLINE, token.DEDENT, token.NL, token.ENDMARKER]:
                         return [n.lineno, n.lineno + tok.start[0] - 1]
 
+    def handle_indentation(self, token_info: tokenize.TokenInfo):
+        if (token_info.type == token.INDENT):
+            self.indentation_counter += 1
+            return True
+
+        if (token_info.type == token.DEDENT):
+            self.indentation_counter -= 1
+            self.indentation_counter = max(self.indentation_counter, 0)
+            return True
+        return False
+
     def tokenize_function_def(self, node: ast.FunctionDef):
         assert node is not None
 
@@ -97,4 +111,5 @@ class ExceptDatasetGenerator():
             if (token_info.type == token.ENDMARKER):
                 return self.end_of_generation()
 
-            self.token_buffer.append(token_info.string)
+            if not self.handle_indentation(token_info):
+                self.token_buffer.append(token_info.string)
