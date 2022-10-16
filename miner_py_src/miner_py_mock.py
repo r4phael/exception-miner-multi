@@ -2,7 +2,7 @@ import ast
 import pandas as pd
 from dataset_generators_py.task1_dataset_generator import TryDatasetGenerator
 from dataset_generators_py.task2_dataset_generator import ExceptDatasetGenerator
-from miner_py_utils import has_except
+from miner_py_utils import has_except, has_nested_catch
 
 
 content = """def wait_for_grpc_server(server_process, client, subprocess_args, timeout=60):
@@ -34,7 +34,8 @@ content = """def wait_for_grpc_server(server_process, client, subprocess_args, t
 
 tree = ast.parse(content)
 func_defs = [f for f in ast.walk(tree) if isinstance(f, ast.FunctionDef)]
-func_defs_try_except = [f for f in func_defs if has_except(f)]
+func_defs_try_except = [f for f in func_defs if has_except(
+    f) and not has_nested_catch(f)]
 
 # 3. Dataset1 ->
 # 	3.1 para cada método, tokeniza os statements do método;

@@ -10,7 +10,7 @@ from subprocess import PIPE, run, call
 from pydriller import Git
 from miner_py_src.dataset_generators_py.task1_dataset_generator import TryDatasetGenerator
 from miner_py_src.dataset_generators_py.task2_dataset_generator import ExceptDatasetGenerator
-from miner_py_src.miner_py_utils import has_except
+from miner_py_src.miner_py_utils import has_except, has_nested_catch
 from utils import create_logger
 
 logger = create_logger("exception_py_miner", "exception_py_miner.log")
@@ -94,7 +94,7 @@ def preprocess():
                 continue
             func_defs = [f for f in ast.walk(
                 tree) if isinstance(f, ast.FunctionDef)]
-            func_defs_try_except = [f for f in func_defs if has_except(f)]
+            func_defs_try_except = [f for f in func_defs if has_except(f) and not has_nested_catch(f)]
 
             # 3. Dataset1 ->
             # 	3.1 para cada método, tokeniza os statements do método;

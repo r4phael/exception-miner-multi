@@ -7,12 +7,19 @@ from dataset_generators_py.task1_dataset_generator import TryDatasetGenerator
 from dataset_generators_py.task2_dataset_generator import ExceptDatasetGenerator
 
 import miner_py_utils as mpu
-from miner_py_utils import has_except
+from miner_py_utils import has_except, has_nested_catch
 
-with open('test1.py') as f:
+# file = '/home/eric3/git/exception-miner/output/py/results/django/_functions.py'
+# file = '/home/eric3/git/exception-miner/output/py/results/django/admin_list.py'
+# file = '/home/eric3/git/exception-miner/output/py/results/SublimeLinter/backend.py'
+# file = '/home/eric3/git/exception-miner/output/py/results/django/makemessages.py'
+file = '/home/eric3/git/exception-miner/miner_py_src/test1.py'
+
+with open(file) as f:
     tree = ast.parse('\n'.join(f.readlines()))
     func_defs = [f for f in ast.walk(tree) if isinstance(f, ast.FunctionDef)]
-    func_defs_try_except = [f for f in func_defs if has_except(f)]
+    func_defs_try_except = [f for f in func_defs if has_except(
+        f) and not has_nested_catch(f)]
 
     # 3. Dataset1 ->
     # 	3.1 para cada método, tokeniza os statements do método;

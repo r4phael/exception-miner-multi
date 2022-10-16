@@ -4,6 +4,7 @@ elasticsearch-dsl-py,https://github.com/elastic/elasticsearch-dsl-py,github
 Cactus,https://github.com/eudicots/Cactus,github
 agents,https://github.com/tensorflow/agents,github
 django-fsm,https://github.com/viewflow/django-fsm,github
+django,https://github.com/django/django,github
 crossbar,https://github.com/crossbario/crossbar,github
 SublimeLinter,https://github.com/SublimeLinter/SublimeLinter,github
 blade-build,https://github.com/chen3feng/blade-build,github

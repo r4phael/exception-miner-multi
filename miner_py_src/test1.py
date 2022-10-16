@@ -9,6 +9,21 @@ def divide_except(x, y):
     except ZeroDivisionError:
         print("Sorry ! You are dividing by zero ")
 
+def divide_except_multi(x, y):
+    a = x
+    b = y
+    try:
+        # Floor Division : Gives only Fractional
+        # Part as Answer
+        result = a // b
+        print("Yeah ! Your answer is :", result)
+    except ZeroDivisionError:
+        print("Sorry ! You are dividing by zero ")
+    except ChildProcessError:
+        print("ChildProcessError ")
+
+    return 0
+
 
 def divide_else(x, y):
     a = x
@@ -74,7 +89,25 @@ def teste_sem_except2():
     try:
         c = b
         print(c)
-    except:
+    except Exception:
         pass
+
+    print(b)
+
+
+def teste_nested_try_except():
+    a = 1
+    b = 2
+    b = a
+    print(b)
+    try:
+        c = b
+        print(c)
+        try:
+            print('nested')
+        except Exception:
+            print('falhou')
+    except Exception:
+        print('falhou')
 
     print(b)
