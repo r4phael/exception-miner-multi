@@ -3,6 +3,14 @@ import pandas as pd
 import time
 
 
+class MinerPyError(Exception):
+    pass
+
+
+class TryNotFountException(MinerPyError):
+    pass
+
+
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -13,6 +21,18 @@ class bcolors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
+
+
+def get_try_slices_recursive(node: ast.FunctionDef):
+    for child in ast.walk(node):
+        if hasattr(child, 'body'):
+            nodes_list = [index for index, child_body in enumerate(
+                child.body) if isinstance(child_body, ast.Try)]
+            if (len(nodes_list) != 0):
+                try_index = nodes_list[0]
+                return child, child.body[try_index], try_index
+
+    raise TryNotFountException('Not found')
 
 
 def has_except(node: ast.FunctionDef):
@@ -34,6 +54,19 @@ def teste():
     print(a)""")) == False)
 
 print("has_except test OK")
+
+
+def has_nested_catch(node: ast.FunctionDef):
+    depth = 0
+    for child in ast.walk(node):
+        if not isinstance(child, ast.Try):
+            continue
+
+        if depth >= 1:
+            return True
+
+        depth += 1
+    return False
 
 
 def has_nested_catch(node: ast.FunctionDef):

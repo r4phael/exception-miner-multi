@@ -11,7 +11,8 @@
             "cwd": "${fileDirname}",
             "program": "${file}",
             "console": "integratedTerminal",
-            "justMyCode": true
+            "justMyCode": true,
+            "args": ["--mode", "preprocess"]
         }
     ]
 }

@@ -3,8 +3,8 @@
 
 import ast
 import pandas as pd
-from dataset_generators_py.task1_dataset_generator import TryDatasetGenerator
-from dataset_generators_py.task2_dataset_generator import ExceptDatasetGenerator
+from task1_dataset_generator import TryDatasetGenerator
+from task2_dataset_generator import ExceptDatasetGenerator
 
 import miner_py_utils as mpu
 from miner_py_utils import has_except, has_nested_catch

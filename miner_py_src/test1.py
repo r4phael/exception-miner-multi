@@ -1,13 +1,14 @@
 def divide_except(x, y):
     a = x
     b = y
-    try:
-        # Floor Division : Gives only Fractional
-        # Part as Answer
-        result = a // b
-        print("Yeah ! Your answer is :", result)
-    except ZeroDivisionError:
-        print("Sorry ! You are dividing by zero ")
+    if True:
+        try:
+            # Floor Division : Gives only Fractional
+            # Part as Answer
+            result = a // b
+            print("Yeah ! Your answer is :", result)
+        except ZeroDivisionError:
+            print("Sorry ! You are dividing by zero ")
 
 def divide_except_multi(x, y):
     a = x
