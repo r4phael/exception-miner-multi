@@ -25,12 +25,16 @@ class bcolors:
 
 def get_try_slices_recursive(node: ast.FunctionDef):
     for child in ast.walk(node):
-        if hasattr(child, 'body'):
-            nodes_list = [index for index, child_body in enumerate(
-                child.body) if isinstance(child_body, ast.Try)]
-            if (len(nodes_list) != 0):
-                try_index = nodes_list[0]
-                return child, child.body[try_index], try_index
+        for name, fields in ast.iter_fields(child):
+            if type(fields) == list:
+                nodes_list = [index for index, child_body in enumerate(
+                    fields) if isinstance(child_body, ast.Try)]
+                if (len(nodes_list) != 0):
+                    try_index = nodes_list[0]
+                    return child, name, try_index
+            elif isinstance(fields, ast.Try):
+                try_index = None
+                return child, name, try_index
 
     raise TryNotFountException('Not found')
 

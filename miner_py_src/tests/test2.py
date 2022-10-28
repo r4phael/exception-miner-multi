@@ -1,8 +1,5 @@
-def test_nested_function(*args):
-    def nested_function(*args):
-        return "nested function"
-
-    if nested_function():
+def test_try_inside_block(*args):
+    if True:
         if output_dtypes is None:
             dummy_args = tf.nest.map_structure(
                 lambda x: np.ones(x.shape, x.dtype.as_numpy_dtype), args)

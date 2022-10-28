@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import numpy as np
 from numpy.random import default_rng
@@ -15,7 +16,9 @@ def split_dataset(df: pd.DataFrame):
 
 def save_task1_pkl(dataframe: pd.DataFrame):
     train, validate, test = split_dataset(dataframe)
+    
+    os.makedirs('output/py/data/task1', exist_ok=True)
 
-    train.to_pickle('../output/py/task1/data/train.pkl', protocol=4)
-    validate.to_pickle('../output/py/task1/data/valid.pkl', protocol=4)
-    test.to_pickle('../output/py/task1/data/test.pkl', protocol=4)
+    train.to_pickle('output/py/data/task1/train.pkl', protocol=4)
+    validate.to_pickle('output/py/data/task1/valid.pkl', protocol=4)
+    test.to_pickle('output/py/data/task1/test.pkl', protocol=4)
