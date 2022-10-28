@@ -8,7 +8,7 @@ import tokenize
 
 from numpy.random import default_rng
 
-from miner_py_utils import get_try_slices_recursive
+from .miner_py_utils import TryNotFountException, get_try_slices_recursive
 
 rng = default_rng()
 
@@ -86,7 +86,11 @@ class ExceptDatasetGenerator():
         return len(node.body) > 0 and not isinstance(node.body[0], ast.Pass)
 
     def get_slices(self, node: ast.FunctionDef):
-        try_parent_node, try_ast, try_index = get_try_slices_recursive(node)
+        try:
+            try_parent_node, try_ast, try_index = get_try_slices_recursive(
+                node)
+        except TryNotFountException:
+            return None
 
         except_handlers_line_numbers = [
             child.lineno for child in try_ast.handlers]
@@ -120,6 +124,9 @@ class ExceptDatasetGenerator():
         assert node is not None
 
         self.slices = self.get_slices(node)
+
+        if self.slices is None:
+            return None
 
         unparsed_code = astunparse.unparse(node)
 

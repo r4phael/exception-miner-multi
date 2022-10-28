@@ -1,6 +1,7 @@
 {
     "python.analysis.exclude": [
         "projects/",
-        "output/"
+        "output/",
+        "miner_py_src/tests/"
     ]
 }
