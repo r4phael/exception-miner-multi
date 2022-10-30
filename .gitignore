@@ -9,3 +9,5 @@ __pycache__
 .ipynb*
 *.log
 *env
+
+except_file.py
