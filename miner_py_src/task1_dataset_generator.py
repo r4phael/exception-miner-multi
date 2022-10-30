@@ -9,6 +9,10 @@ from numpy.random import default_rng
 
 rng = default_rng()
 
+INDENT_STR = f'<{token.tok_name[token.INDENT]}>'
+DEDENT_STR = f'<{token.tok_name[token.DEDENT]}>'
+NEWLINE_STR = f'<{token.tok_name[token.NEWLINE]}>'
+
 
 class TryDatasetGenerator():
 
@@ -49,9 +53,9 @@ class TryDatasetGenerator():
     def clear_line_buffer(self):
         if len(self.token_buffer) != 0:
             if self.try_reached:
-                indentation = (self.indentation_counter - 1) * '\t'
+                indentation = (self.indentation_counter - 1) * INDENT_STR
             else:
-                indentation = self.indentation_counter * '\t'
+                indentation = self.indentation_counter * INDENT_STR
 
             self.lines.append(indentation +
                               ' '.join(self.token_buffer))
@@ -77,6 +81,16 @@ class TryDatasetGenerator():
                     return None
                 return [n.lineno, n.handlers[0].lineno]
 
+    def handle_indentation_and_newline(self, token_info: tokenize.TokenInfo):
+        return self.handle_indentation(
+            token_info) or self.handle_new_line(token_info)
+
+    def handle_new_line(self, token_info: tokenize.TokenInfo):
+        if (token_info.type == token.NEWLINE):
+            self.token_buffer.append(NEWLINE_STR)
+            return True
+        return False
+
     def handle_indentation(self, token_info: tokenize.TokenInfo):
         if (token_info.type == token.INDENT):
             self.indentation_counter += 1
@@ -84,7 +98,7 @@ class TryDatasetGenerator():
 
         if (token_info.type == token.DEDENT):
             self.indentation_counter -= 1
-            self.indentation_counter = max(self.indentation_counter, 0)
+            assert self.indentation_counter >= 0
             return True
         return False
 
@@ -104,16 +118,17 @@ class TryDatasetGenerator():
 
             self.try_reached = token_info.start[0] >= try_slice[0]
             if token_info.start[0] == try_slice[0]:  # ignore try
+                self.handle_indentation(token_info)
                 continue
 
             if token_info.start[0] >= try_slice[1]:
                 return self.end_of_generation()
 
-            if (token_info.type in [token.COMMENT, token.NEWLINE, token.NL]):
+            if (token_info.type in [token.COMMENT, token.NL]):
                 continue
 
             if (token_info.type == token.ENDMARKER):
                 return self.end_of_generation()
 
-            if (not self.handle_indentation(token_info)):
+            if (not self.handle_indentation_and_newline(token_info)):
                 self.token_buffer.append(token_info.string)

@@ -133,8 +133,9 @@ def print_pair_task1(df, delay=0):
     if df.size == 0:
         print("[Task 1] Empty Dataframe")
         return
-    for labels, lines in zip(df['labels'], df['lines']):
-        print('\n'.join([get_color_string(bcolors.WARNING if label == 1 else bcolors.HEADER, f"{label} {line}") for label,
+    df_lines: list[str] = df['lines']
+    for labels, lines in zip(df['labels'], df_lines):
+        print('\n'.join([get_color_string(bcolors.WARNING if label == 1 else bcolors.HEADER, f"{label} {decode_indent(line)}") for label,
               line in zip(labels, lines)]), end='\n\n')
         time.sleep(delay)
 
@@ -144,10 +145,14 @@ def print_pair_task2(df: pd.DataFrame, delay=False):
         print("[Task 2] Empty Dataframe")
         return
     for try_lines, except_lines in zip(df['try'], df['except']):
-        print(get_color_string(bcolors.OKGREEN, '\n'.join(try_lines)))
-        print(get_color_string(bcolors.FAIL, '\n'.join(except_lines)))
+        print(get_color_string(bcolors.OKGREEN, decode_indent('\n'.join(try_lines))))
+        print(get_color_string(bcolors.FAIL, decode_indent('\n'.join(except_lines))))
         print()
         time.sleep(delay)
+
+
+def decode_indent(line: str):
+    return line.replace('<INDENT>', '    ').replace('<NEWLINE>', '')
 
 
 def get_color_string(color: bcolors, string: str):

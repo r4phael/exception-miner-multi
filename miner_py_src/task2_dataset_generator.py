@@ -18,6 +18,10 @@ Slices = namedtuple('Slices', [
     'end_lineno',
 ])
 
+INDENT_STR = f'<{token.tok_name[token.INDENT]}>'
+DEDENT_STR = f'<{token.tok_name[token.DEDENT]}>'
+NEWLINE_STR = f'<{token.tok_name[token.NEWLINE]}>'
+
 
 class ExceptDatasetGenerator():
 
@@ -58,7 +62,7 @@ class ExceptDatasetGenerator():
         if len(self.token_buffer) == 0:
             return
 
-        indentation = self.indentation_counter * '\t'
+        indentation = self.indentation_counter * INDENT_STR
 
         tokenized_line = indentation + ' '.join(self.token_buffer)
         self.token_buffer = []
@@ -115,7 +119,7 @@ class ExceptDatasetGenerator():
                       handlers_lineno=except_handlers_line_numbers,
                       end_lineno=end_lineno)
 
-    def handle_indentation(self, token_info: tokenize.TokenInfo):
+    def handle_indentation_and_newline(self, token_info: tokenize.TokenInfo):
         if (token_info.type == token.INDENT):
             self.indentation_counter += 1
             return True
@@ -123,6 +127,10 @@ class ExceptDatasetGenerator():
         if (token_info.type == token.DEDENT):
             self.indentation_counter -= 1
             self.indentation_counter = max(self.indentation_counter, 0)
+            return True
+
+        if (token_info.type == token.NEWLINE):
+            self.token_buffer.append(NEWLINE_STR)
             return True
         return False
 
@@ -145,11 +153,11 @@ class ExceptDatasetGenerator():
                         and self.slices.end_lineno <= self.current_lineno):
                     return self.end_of_generation()
 
-            if (token_info.type in [token.COMMENT, token.NEWLINE, token.NL]):
+            if (token_info.type in [token.COMMENT, token.NL]):
                 continue
 
             if (token_info.type == token.ENDMARKER):
                 return self.end_of_generation()
 
-            if not self.handle_indentation(token_info):
+            if not self.handle_indentation_and_newline(token_info):
                 self.token_buffer.append(token_info.string)
