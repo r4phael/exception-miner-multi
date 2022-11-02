@@ -14,7 +14,9 @@ from miner_py_src.miner_py_utils import has_except, has_nested_catch
 # file = '/home/eric3/git/exception-miner/output/py/results/SublimeLinter/backend.py'
 # file = '/home/eric3/git/exception-miner/output/py/results/django/makemessages.py'
 # file = '/home/eric3/git/exception-miner/miner_py_src/tests/test1.py'
-file = '/home/eric3/git/exception-miner/miner_py_src/tests/test2.py'
+# file = '/home/eric3/git/exception-miner/miner_py_src/tests/test2.py'
+# file = '/home/eric3/git/exception-miner/miner_py_src/tests/test3.py'
+file = '/home/eric3/git/exception-miner/miner_py_src/tests/test4.py'
 
 with open(file) as f:
     tree = ast.parse('\n'.join(f.readlines()))

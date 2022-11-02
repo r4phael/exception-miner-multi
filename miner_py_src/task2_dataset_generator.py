@@ -18,9 +18,9 @@ Slices = namedtuple('Slices', [
     'end_lineno',
 ])
 
-INDENT_STR = f'<{token.tok_name[token.INDENT]}>'
-DEDENT_STR = f'<{token.tok_name[token.DEDENT]}>'
-NEWLINE_STR = f'<{token.tok_name[token.NEWLINE]}>'
+INDENT_STR = f'<{token.tok_name[token.INDENT]}> '
+DEDENT_STR = f'<{token.tok_name[token.DEDENT]}> '
+NEWLINE_STR = f'<{token.tok_name[token.NEWLINE]}> '
 
 
 class ExceptDatasetGenerator():
@@ -111,7 +111,8 @@ class ExceptDatasetGenerator():
         elif len(try_ast.finalbody) != 0:
             end_lineno = try_ast.finalbody[0].lineno - 1
         elif len(try_parent_node.__getattribute__(field_name)) > try_index + 1:
-            end_lineno = try_parent_node.__getattribute__(field_name)[try_index + 1].lineno
+            end_lineno = try_parent_node.__getattribute__(
+                field_name)[try_index + 1].lineno
 
         self.except_lines = [[]
                              for _ in range(len(except_handlers_line_numbers))]
@@ -119,7 +120,7 @@ class ExceptDatasetGenerator():
                       handlers_lineno=except_handlers_line_numbers,
                       end_lineno=end_lineno)
 
-    def handle_indentation_and_newline(self, token_info: tokenize.TokenInfo):
+    def handle_indentation_and_newline_and_string(self, token_info: tokenize.TokenInfo):
         if (token_info.type == token.INDENT):
             self.indentation_counter += 1
             return True
@@ -132,6 +133,12 @@ class ExceptDatasetGenerator():
         if (token_info.type == token.NEWLINE):
             self.token_buffer.append(NEWLINE_STR)
             return True
+
+        if (token_info.type == token.STRING):
+            self.token_buffer.append(token_info.string[0])
+            self.token_buffer.append(''.join(token_info.string[1:-1].splitlines()).strip())
+            self.token_buffer.append(token_info.string[-1])
+            return True
         return False
 
     def tokenize_function_def(self, node: ast.FunctionDef):
@@ -141,6 +148,9 @@ class ExceptDatasetGenerator():
 
         if self.slices is None:
             return None
+        
+        if('decorator_list' in node._fields):
+            node.decorator_list = []
 
         unparsed_code = astunparse.unparse(node)
 
@@ -159,5 +169,5 @@ class ExceptDatasetGenerator():
             if (token_info.type == token.ENDMARKER):
                 return self.end_of_generation()
 
-            if not self.handle_indentation_and_newline(token_info):
+            if not self.handle_indentation_and_newline_and_string(token_info):
                 self.token_buffer.append(token_info.string)

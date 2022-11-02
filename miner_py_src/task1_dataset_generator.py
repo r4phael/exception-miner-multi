@@ -9,9 +9,9 @@ from numpy.random import default_rng
 
 rng = default_rng()
 
-INDENT_STR = f'<{token.tok_name[token.INDENT]}>'
-DEDENT_STR = f'<{token.tok_name[token.DEDENT]}>'
-NEWLINE_STR = f'<{token.tok_name[token.NEWLINE]}>'
+INDENT_STR = f'<{token.tok_name[token.INDENT]}> '
+DEDENT_STR = f'<{token.tok_name[token.DEDENT]}> '
+NEWLINE_STR = f'<{token.tok_name[token.NEWLINE]}> '
 
 
 class TryDatasetGenerator():
