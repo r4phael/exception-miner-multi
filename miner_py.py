@@ -6,7 +6,7 @@ import shutil
 import ast
 from tqdm import tqdm
 #from subprocess import call
-from subprocess import PIPE, run, call
+from subprocess import call
 from pydriller import Git
 from miner_py_src.task1_dataset_generator import TryDatasetGenerator
 from miner_py_src.task2_dataset_generator import ExceptDatasetGenerator
@@ -89,9 +89,8 @@ def preprocess():
             content = f.read()
             try:
                 tree = ast.parse(content)
-            except SyntaxError as e:
-                print(
-                    f"###### SyntaxError Error!!! file: {file}.\n{str(e)}")
+            except SyntaxError as ex:
+                print(f"###### SyntaxError Error!!! file: {file}.\n{str(ex)}")
                 continue
             func_defs = [f for f in ast.walk(
                 tree) if isinstance(f, ast.FunctionDef)]
