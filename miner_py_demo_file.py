@@ -5,6 +5,7 @@ import ast
 import pandas as pd
 from miner_py_src.task1_dataset_generator import TryDatasetGenerator
 from miner_py_src.task2_dataset_generator import ExceptDatasetGenerator
+from random import sample
 
 import miner_py_src.miner_py_utils as mpu
 from miner_py_src.miner_py_utils import has_except, has_nested_catch
@@ -23,11 +24,14 @@ with open(file) as f:
     func_defs = [f for f in ast.walk(tree) if isinstance(f, ast.FunctionDef)]
     func_defs_try_except = [f for f in func_defs if has_except(
         f) and not has_nested_catch(f)]
+    func_defs_no_try = sample(
+        [f for f in func_defs if not has_except(f)],
+        len(func_defs_try_except))
 
     # 3. Dataset1 ->
     # 	3.1 para cada método, tokeniza os statements do método;
     # 	3.2 se o statement estiver dentro de um try, coloca 1, caso contrário 0;
-    dg1 = TryDatasetGenerator(func_defs_try_except)
+    dg1 = TryDatasetGenerator(func_defs_try_except + func_defs_no_try)
     df = pd.DataFrame(dg1.generate())
     print(df)
     mpu.print_pair_task1(df)

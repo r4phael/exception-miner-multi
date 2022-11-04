@@ -42,7 +42,7 @@ class TryDatasetGenerator():
                 tokenized_function_def = self.tokenize_function_def(tree)
 
                 if tokenized_function_def is not None:
-                    generated.append(self.tokenize_function_def(tree))
+                    generated.append(tokenized_function_def)
             except SyntaxError as e:
                 print(
                     f"###### SyntaxError Error!!! in ast.FunctionDef {f}.\n{str(e)}")
@@ -107,22 +107,20 @@ class TryDatasetGenerator():
 
         try_slice = self.get_try_slice(node)
 
-        if try_slice is None:
-            return None
-
         unparsed_code = astunparse.unparse(node)
         for token_info in tokenize.generate_tokens(io.StringIO(unparsed_code).readline):
             if token_info.line != self.current_line:
                 self.clear_line_buffer()
                 self.current_line = token_info.line
 
-            self.try_reached = token_info.start[0] >= try_slice[0]
-            if token_info.start[0] == try_slice[0]:  # ignore try
-                self.handle_indentation(token_info)
-                continue
+            if try_slice is not None:
+                self.try_reached = token_info.start[0] >= try_slice[0]
+                if token_info.start[0] == try_slice[0]:  # ignore try
+                    self.handle_indentation(token_info)
+                    continue
 
-            if token_info.start[0] >= try_slice[1]:
-                return self.end_of_generation()
+                if token_info.start[0] >= try_slice[1]:
+                    return self.end_of_generation()
 
             if (token_info.type in [token.COMMENT, token.NL]):
                 continue

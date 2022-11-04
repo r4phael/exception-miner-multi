@@ -14,3 +14,6 @@ def teste_string_linebreak(self):
             app = app(self.args)
         except TypeError:
             app = app()
+
+def func():
+    return True

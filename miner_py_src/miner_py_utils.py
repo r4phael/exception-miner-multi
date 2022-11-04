@@ -145,7 +145,8 @@ def print_pair_task2(df: pd.DataFrame, delay=False):
         print("[Task 2] Empty Dataframe")
         return
     for try_lines, except_lines in zip(df['try'], df['except']):
-        print(get_color_string(bcolors.OKGREEN, decode_indent('\n'.join(try_lines))))
+        print(get_color_string(bcolors.OKGREEN,
+              decode_indent('\n'.join(try_lines))))
         print(get_color_string(bcolors.FAIL, decode_indent('\n'.join(except_lines))))
         print()
         time.sleep(delay)
