@@ -78,6 +78,22 @@ def preprocess():
     paths = pathlib.Path(r'output/py/results/').glob('**/*.py')
     files = [x for x in paths if x.is_file()]
 
+    task1, task2 = get_datasets(files)
+
+    print(task1)
+    print(task2)
+    stats_try_location_dataset(task1)
+    stats_catch_generation_dataset(task2)
+
+    print('Saving pickle datasets ...')
+
+    os.makedirs('output/py/data', exist_ok=True)
+
+    save_task1_pkl(task1)
+    save_task2_pkl(task2)
+
+
+def get_datasets(files):
     task1 = pd.DataFrame()
     task2 = pd.DataFrame()
 
@@ -100,9 +116,14 @@ def preprocess():
 
     func_defs_try_except = [f for f in func_defs if has_except(
         f) and not has_nested_catch(f)]
-    func_defs_no_try = sample(
-        [f for f in func_defs if not has_try(f)],
-        len(func_defs_try_except))
+
+    negative_samples = [f for f in func_defs if not has_try(f)]
+    try:
+        func_defs_no_try = sample(
+            negative_samples,
+            len(func_defs_try_except))
+    except ValueError:
+        func_defs_no_try = negative_samples
 
     # 3. Dataset1 ->
     # 	3.1 para cada método, tokeniza os statements do método;
@@ -116,18 +137,7 @@ def preprocess():
     # 		4.1.2 o código do except.
     dg2 = ExceptDatasetGenerator(func_defs_try_except)
     task2 = pd.DataFrame(dg2.generate())
-
-    print(task1)
-    print(task2)
-    stats_try_location_dataset(task1)
-    stats_catch_generation_dataset(task2)
-
-    print('Saving pickle datasets ...')
-
-    os.makedirs('output/py/data', exist_ok=True)
-
-    save_task1_pkl(task1)
-    save_task2_pkl(task2)
+    return task1, task2
 
 
 if __name__ == '__main__':
