@@ -35,9 +35,14 @@ for file in files:
 
     func_defs_try_except = [f for f in func_defs if has_except(
         f) and not has_nested_catch(f)]
-    func_defs_no_try = sample(
-        [f for f in func_defs if not has_try(f)],
-        len(func_defs_try_except))
+
+    negative_samples = [f for f in func_defs if not has_try(f)]
+    try:
+        func_defs_no_try = sample(
+            negative_samples,
+            len(func_defs_try_except))
+    except ValueError:
+        func_defs_no_try = negative_samples
 
     # 3. Dataset1 ->
     # 	3.1 para cada método, tokeniza os statements do método;
