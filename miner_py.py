@@ -11,7 +11,7 @@ from pydriller import Git
 from random import sample
 from miner_py_src.task1_dataset_generator import TryDatasetGenerator
 from miner_py_src.task2_dataset_generator import ExceptDatasetGenerator
-from miner_py_src.miner_py_utils import has_except, has_nested_catch
+from miner_py_src.miner_py_utils import has_except, has_nested_catch, has_try, stats_try_location_dataset, stats_catch_generation_dataset
 from miner_py_src.split_dataset import save_task1_pkl, save_task2_pkl
 from utils import create_logger
 
@@ -82,6 +82,8 @@ def preprocess():
     task2 = pd.DataFrame()
 
     pbar = tqdm(files)
+
+    func_defs = []
     for file in pbar:
         pbar.set_description(f"Processing {str(file)[-40:].ljust(40)}")
         # 1.selecionar arquivos python que contém um try-except
@@ -93,32 +95,37 @@ def preprocess():
             except SyntaxError as ex:
                 print(f"###### SyntaxError Error!!! file: {file}.\n{str(ex)}")
                 continue
-            func_defs = [f for f in ast.walk(
+            func_defs += [f for f in ast.walk(
                 tree) if isinstance(f, ast.FunctionDef)]
-            func_defs_try_except = [f for f in func_defs if has_except(
-                f) and not has_nested_catch(f)]
-            func_defs_no_try = sample(
-                [f for f in func_defs if not has_except(f)],
-                len(func_defs_try_except))
 
-            # 3. Dataset1 ->
-            # 	3.1 para cada método, tokeniza os statements do método;
-            # 	3.2 se o statement estiver dentro de um try, coloca 1, caso contrário 0;
-            dg1 = TryDatasetGenerator(func_defs_try_except + func_defs_no_try)
-            task1 = pd.concat([task1, pd.DataFrame(dg1.generate())])
+    func_defs_try_except = [f for f in func_defs if has_except(
+        f) and not has_nested_catch(f)]
+    func_defs_no_try = sample(
+        [f for f in func_defs if not has_try(f)],
+        len(func_defs_try_except))
 
-            # 4. Dataset 2->
-            # 	4.1 para cada método, extrair or par {código do método, except):
-            # 		4.1.1 o código do método com o try sem o except;
-            # 		4.1.2 o código do except.
-            dg2 = ExceptDatasetGenerator(func_defs_try_except)
-            task2 = pd.concat([task2, pd.DataFrame(dg2.generate())])
+    # 3. Dataset1 ->
+    # 	3.1 para cada método, tokeniza os statements do método;
+    # 	3.2 se o statement estiver dentro de um try, coloca 1, caso contrário 0;
+    dg1 = TryDatasetGenerator(func_defs_try_except + func_defs_no_try)
+    task1 = pd.DataFrame(dg1.generate())
+
+    # 4. Dataset 2->
+    # 	4.1 para cada método, extrair or par {código do método, except):
+    # 		4.1.1 o código do método com o try sem o except;
+    # 		4.1.2 o código do except.
+    dg2 = ExceptDatasetGenerator(func_defs_try_except)
+    task2 = pd.DataFrame(dg2.generate())
 
     print(task1)
     print(task2)
+    stats_try_location_dataset(task1)
+    stats_catch_generation_dataset(task2)
+
     print('Saving pickle datasets ...')
 
     os.makedirs('output/py/data', exist_ok=True)
+
     save_task1_pkl(task1)
     save_task2_pkl(task2)
 

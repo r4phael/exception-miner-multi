@@ -39,6 +39,13 @@ def get_try_slices_recursive(node: ast.FunctionDef):
     raise TryNotFountException('Not found')
 
 
+def has_try(node: ast.FunctionDef):
+    for child in ast.walk(node):
+        if isinstance(child, ast.Try):
+            return True
+    return False
+
+
 def has_except(node: ast.FunctionDef):
     for child in ast.walk(node):
         if isinstance(child, ast.ExceptHandler):
@@ -158,3 +165,38 @@ def decode_indent(line: str):
 
 def get_color_string(color: bcolors, string: str):
     return f"{color}{string}{bcolors.ENDC}"
+
+
+def stats_try_location_dataset(dataframe: pd.DataFrame):
+
+    # #Java methods 755,846
+    # #TryNum=1 341,040
+    # #TryNum≥2 36,883
+    # MaxT 6403
+    # AvgT 115.9
+    # MaxS 99
+    # AvgS 14.7
+    # UniqT 566,378
+
+    print(f'#Java methods {len(dataframe)}')
+    print(f'#TryNum=1 {len(dataframe[dataframe["hasCatch"] == 1])}')
+
+    # {
+    #     'hasCatch': 1 if self.has_catch else 0,
+    #     'lines': self.lines,
+    #     'labels': self.labels
+    # }
+
+
+def stats_catch_generation_dataset(dataframe: pd.DataFrame):
+
+    # #Try-catch pairs 351,420
+    # #CatchNum=1 324,084
+    # #CatchNum≥2 27,336
+    # MaxT of Source 3,313
+    # AvgT of Source 113.1
+    # MaxT of Target 365
+    # AvgT of Target 26.5
+    # UniqT 214,799
+
+    print(f'#Try-catch {len(dataframe)}')
