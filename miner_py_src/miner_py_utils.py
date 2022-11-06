@@ -1,17 +1,11 @@
 import ast
 import pandas as pd
 import time
+from enum import Enum
+from .exceptions import TryNotFoundException, FunctionDefNotFoundException
 
 
-class MinerPyError(Exception):
-    pass
-
-
-class TryNotFountException(MinerPyError):
-    pass
-
-
-class bcolors:
+class bcolors(Enum):
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
     OKCYAN = '\033[96m'
@@ -23,77 +17,92 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 
+# TODO criar testes
 def get_try_slices_recursive(node: ast.FunctionDef):
     for child in ast.walk(node):
         for name, fields in ast.iter_fields(child):
             if type(fields) == list:
                 nodes_list = [index for index, child_body in enumerate(
                     fields) if isinstance(child_body, ast.Try)]
-                if (len(nodes_list) != 0):
-                    try_index = nodes_list[0]
-                    return child, name, try_index
-            elif isinstance(fields, ast.Try):
+                for try_index in nodes_list:
+                    try_node = child.__getattribute__(name)[try_index]
+                    if isinstance(try_node, ast.Try) and len(try_node.handlers) != 0:
+                        return child, name, try_index
+            elif isinstance(fields, ast.Try) and len(fields.handlers) != 0:
                 try_index = None
                 return child, name, try_index
 
-    raise TryNotFountException('Not found')
+    raise TryNotFoundException('Not found')
 
 
-def has_try(node: ast.FunctionDef):
+def get_function_def(node: ast.Module):
+    for child in ast.walk(node):
+        if isinstance(child, ast.FunctionDef):
+            return child
+    raise FunctionDefNotFoundException('Not found')
+
+
+def check_function_has_try(node: ast.FunctionDef):
     for child in ast.walk(node):
         if isinstance(child, ast.Try):
             return True
     return False
 
 
-def has_except(node: ast.FunctionDef):
+def count_try(node: ast.FunctionDef):
+    count = 0
+    for child in ast.walk(node):
+        if isinstance(child, ast.Try):
+            count += 1
+    return count
+
+
+def check_function_has_except_handler(node: ast.FunctionDef):
     for child in ast.walk(node):
         if isinstance(child, ast.ExceptHandler):
             return True
     return False
 
 
-assert (has_except(ast.parse("""
+def statement_couter(node: ast.FunctionDef):
+    counter = 0
+    for child in ast.walk(node):
+        if isinstance(child, ast.stmt):
+            counter += 1
+    return counter
+
+
+assert (check_function_has_except_handler(get_function_def(ast.parse("""
 def teste():
     try:
         print(a)
     except:
-        pass""")) == True)
+        pass"""))) == True)
 
-assert (has_except(ast.parse("""
+assert (check_function_has_except_handler(get_function_def(ast.parse("""
 def teste():
-    print(a)""")) == False)
+    print(a)"""))) == False)
 
 print("has_except test OK")
 
 
-def has_nested_catch(node: ast.FunctionDef):
-    depth = 0
-    for child in ast.walk(node):
-        if not isinstance(child, ast.Try):
-            continue
-
-        if depth >= 1:
+def check_function_has_nested_try(node: ast.AST, has_try_parent=False):
+    for child in ast.iter_child_nodes(node):
+        is_try = isinstance(child, ast.Try)
+        if is_try and has_try_parent:
             return True
-
-        depth += 1
+        elif is_try:
+            has_nested = check_function_has_nested_try(child, True)
+            if has_nested:
+                return True
+        else:
+            has_try = check_function_has_nested_try(child, has_try_parent)
+            if has_try and has_try_parent:
+                return True
     return False
 
 
-def has_nested_catch(node: ast.FunctionDef):
-    depth = 0
-    for child in ast.walk(node):
-        if not isinstance(child, ast.Try):
-            continue
-
-        if depth >= 1:
-            return True
-
-        depth += 1
-    return False
-
-
-assert (has_nested_catch(ast.parse("""
+assert (check_function_has_nested_try(get_function_def(ast.parse("""
 def teste():
     try:
         print(a)
@@ -102,16 +111,16 @@ def teste():
         except:
             pass
     except:
-        pass""")) == True)
+        pass"""))) == True)
 
-assert (has_nested_catch(ast.parse("""
+assert (check_function_has_nested_try(get_function_def(ast.parse("""
 def teste():
     try:
         print(a)
     except:
-        pass""")) == False)
+        pass"""))) == False)
 
-assert (has_nested_catch(ast.parse("""
+assert (check_function_has_nested_try(get_function_def(ast.parse("""
 def teste_nested_try_except():
     a = 1
     b = 2
@@ -120,14 +129,33 @@ def teste_nested_try_except():
     try:
         c = b
         print(c)
-        try:
-            print('nested')
-        except Exception:
-            print('falhou')
+        if True:
+            try:
+                print('nested')
+            except Exception:
+                print('falhou')
     except Exception:
         print('falhou')
 
-    print(b)""")) == True)
+    print(b)"""))) == True)
+
+assert (check_function_has_nested_try(get_function_def(ast.parse("""
+def teste_nested_try_except():
+    a = 1
+    b = 2
+    b = a
+    print(b)
+    try:
+        c = b
+        print(c)
+    except Exception:
+        print('falhou')
+    try:
+        print('nested')
+    except Exception:
+        print('falhou')
+
+    print(b)"""))) == False)
 
 print("has_nested_catch test OK")
 
@@ -165,38 +193,3 @@ def decode_indent(line: str):
 
 def get_color_string(color: bcolors, string: str):
     return f"{color}{string}{bcolors.ENDC}"
-
-
-def stats_try_location_dataset(dataframe: pd.DataFrame):
-
-    # #Java methods 755,846
-    # #TryNum=1 341,040
-    # #TryNum≥2 36,883
-    # MaxT 6403
-    # AvgT 115.9
-    # MaxS 99
-    # AvgS 14.7
-    # UniqT 566,378
-
-    print(f'#Java methods {len(dataframe)}')
-    print(f'#TryNum=1 {len(dataframe[dataframe["hasCatch"] == 1])}')
-
-    # {
-    #     'hasCatch': 1 if self.has_catch else 0,
-    #     'lines': self.lines,
-    #     'labels': self.labels
-    # }
-
-
-def stats_catch_generation_dataset(dataframe: pd.DataFrame):
-
-    # #Try-catch pairs 351,420
-    # #CatchNum=1 324,084
-    # #CatchNum≥2 27,336
-    # MaxT of Source 3,313
-    # AvgT of Source 113.1
-    # MaxT of Target 365
-    # AvgT of Target 26.5
-    # UniqT 214,799
-
-    print(f'#Try-catch {len(dataframe)}')

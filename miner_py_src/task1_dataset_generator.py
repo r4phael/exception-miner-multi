@@ -1,9 +1,11 @@
 import ast
 import io
-from typing import List
+from typing import List, Dict
 import astunparse
 import token
 import tokenize
+import pandas as pd
+from .miner_py_utils import statement_couter, get_function_def, count_try
 
 from numpy.random import default_rng
 
@@ -14,10 +16,41 @@ DEDENT_STR = f'<{token.tok_name[token.DEDENT]}> '
 NEWLINE_STR = f'<{token.tok_name[token.NEWLINE]}> '
 
 
+class TBLDStats:
+    functions_count = 0
+    try_num_eq_1 = 0
+    try_num_lt_eq_2 = 0
+    tokens_count = 0
+    num_max_tokens = 0
+    statements_count = 0
+    num_max_statement = 0
+    # TODO UniqT
+
+    function_tokens_acc = 0
+
+    def increment_try_stats(self, try_count):
+        if try_count == 1:
+            self.try_num_eq_1 += 1
+        elif try_count >= 2:
+            self.try_num_lt_eq_2 += 1
+
+    def __str__(self) -> str:
+        return ('-------- STATS --------\n'
+                f'#Python methods\t{self.functions_count}\n'
+                f'#TryNum=1\t{self.try_num_eq_1}\n'
+                f'#TryNum>=2\t{self.try_num_lt_eq_2}\n'
+                f'#MaxT\t{self.num_max_tokens}\n'
+                f'#AvgT\t{self.tokens_count / self.functions_count if self.functions_count != 0 else 0}\n'
+                f'#MaxS\t{self.num_max_statement}\n'
+                f'#AvgS\t{(self.statements_count / self.functions_count) if self.functions_count != 0 else 0}\n'
+                )
+
+
 class TryDatasetGenerator():
 
     def __init__(self, func_defs: List[ast.FunctionDef]) -> None:
         self.func_defs = func_defs
+        self.stats = TBLDStats()
         self.reset()
 
     def reset(self):
@@ -31,34 +64,52 @@ class TryDatasetGenerator():
         self.current_line = None
         self.token_buffer = []
 
+        self.stats.num_max_tokens = max(
+            self.stats.num_max_tokens, self.stats.function_tokens_acc)
+        self.stats.tokens_count += self.stats.function_tokens_acc
+        self.stats.function_tokens_acc = 0
+
     def generate(self):
         generated = []
 
         for f in self.func_defs:
             try:
                 # remove lint formatting
-                tree = ast.parse(astunparse.unparse(f))
+                function_def = get_function_def(
+                    ast.parse(astunparse.unparse(f)))
 
-                tokenized_function_def = self.tokenize_function_def(tree)
+                tokenized_function_def = self.tokenize_function_def(
+                    function_def)
 
                 if tokenized_function_def is not None:
+                    self.stats.functions_count += 1
+                    self.stats.increment_try_stats(count_try(function_def))
+                    num_statements = statement_couter(function_def)
+                    self.stats.statements_count += num_statements
+                    self.stats.num_max_statement = max(
+                        self.stats.num_max_statement, num_statements)
                     generated.append(tokenized_function_def)
             except SyntaxError as e:
                 print(
                     f"###### SyntaxError Error!!! in ast.FunctionDef {f}.\n{str(e)}")
                 continue
 
-        return generated
+        print(self.stats)
+        return pd.DataFrame(generated)
 
     def clear_line_buffer(self):
         if len(self.token_buffer) != 0:
             if self.try_reached:
                 indentation = (self.indentation_counter - 1) * INDENT_STR
+                self.stats.function_tokens_acc += (
+                    self.indentation_counter - 1)
             else:
                 indentation = self.indentation_counter * INDENT_STR
+                self.stats.function_tokens_acc += self.indentation_counter
 
-            self.lines.append(indentation +
-                              ' '.join(self.token_buffer))
+            self.stats.function_tokens_acc += len(self.token_buffer)
+
+            self.lines.append(indentation + ' '.join(self.token_buffer))
             self.labels.append(1 if self.try_reached else 0)
         self.token_buffer = []
 

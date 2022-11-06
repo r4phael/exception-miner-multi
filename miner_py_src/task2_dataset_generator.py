@@ -8,7 +8,7 @@ import tokenize
 
 from numpy.random import default_rng
 
-from .miner_py_utils import TryNotFountException, get_try_slices_recursive
+from .miner_py_utils import TryNotFoundException, get_try_slices_recursive, get_function_def
 
 rng = default_rng()
 
@@ -44,8 +44,7 @@ class ExceptDatasetGenerator():
         for f in self.func_defs:
             try:
                 # remove lint formatting
-                tree = ast.parse(astunparse.unparse(f))
-                tree = tree.body[0]
+                tree = get_function_def(ast.parse(astunparse.unparse(f)))
 
                 tokenized_function_def = self.tokenize_function_def(tree)
 
@@ -93,7 +92,7 @@ class ExceptDatasetGenerator():
         try:
             try_parent_node, field_name, try_index = get_try_slices_recursive(
                 node)
-        except TryNotFountException:
+        except TryNotFoundException:
             return None
 
         if (try_index is None):
@@ -136,7 +135,8 @@ class ExceptDatasetGenerator():
 
         if (token_info.type == token.STRING):
             self.token_buffer.append(token_info.string[0])
-            self.token_buffer.append(''.join(token_info.string[1:-1].splitlines()).strip())
+            self.token_buffer.append(
+                ''.join(token_info.string[1:-1].splitlines()).strip())
             self.token_buffer.append(token_info.string[-1])
             return True
         return False
@@ -148,8 +148,8 @@ class ExceptDatasetGenerator():
 
         if self.slices is None:
             return None
-        
-        if('decorator_list' in node._fields):
+
+        if ('decorator_list' in node._fields):
             node.decorator_list = []
 
         unparsed_code = astunparse.unparse(node)

@@ -3,5 +3,6 @@
         "projects/",
         "output/",
         "miner_py_src/tests/"
-    ]
+    ],
+    "python.analysis.typeCheckingMode": "basic"
 }

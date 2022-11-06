@@ -1,3 +1,8 @@
+from utils import create_logger
+from miner_py_src.split_dataset import save_task1_pkl, save_task2_pkl
+from miner_py_src.miner_py_utils import check_function_has_except_handler, check_function_has_nested_try, check_function_has_try
+from miner_py_src.task2_dataset_generator import ExceptDatasetGenerator
+from miner_py_src.task1_dataset_generator import TryDatasetGenerator
 import argparse
 import pandas as pd
 import pathlib
@@ -8,12 +13,9 @@ from tqdm import tqdm
 #from subprocess import call
 from subprocess import call
 from pydriller import Git
-from random import sample
-from miner_py_src.task1_dataset_generator import TryDatasetGenerator
-from miner_py_src.task2_dataset_generator import ExceptDatasetGenerator
-from miner_py_src.miner_py_utils import has_except, has_nested_catch, has_try, stats_try_location_dataset, stats_catch_generation_dataset
-from miner_py_src.split_dataset import save_task1_pkl, save_task2_pkl
-from utils import create_logger
+from random import sample, seed
+seed(10)
+
 
 logger = create_logger("exception_py_miner", "exception_py_miner.log")
 
@@ -42,6 +44,7 @@ def fetch_repositories():
         except Exception as e:
             logger.warning(
                 "Exception Miner: error in project: {}, error: {}".format(project, str(e)))
+            continue
 
         if not os.path.exists("output/py/results/{}".format(project)):
             os.mkdir("output/py/results/{}".format(project))
@@ -69,28 +72,33 @@ def fetch_repositories():
                                 file, "output/py/results/{}/{}".format(project, os.path.basename(file)))
 
                 except Exception as e:
-                    f.close()
                     print(
                         f"###### Error!!! in project {project} and file: {file}. exception: {str(e)} ##########")
 
 
-def preprocess():
+def get_files():
     paths = pathlib.Path(r'output/py/results/').glob('**/*.py')
     files = [x for x in paths if x.is_file()]
+    return files
 
-    task1, task2 = get_datasets(files)
 
-    print(task1)
-    print(task2)
-    stats_try_location_dataset(task1)
-    stats_catch_generation_dataset(task2)
-
+def save_datasets(task1: pd.DataFrame, task2: pd.DataFrame):
     print('Saving pickle datasets ...')
 
     os.makedirs('output/py/data', exist_ok=True)
 
     save_task1_pkl(task1)
     save_task2_pkl(task2)
+
+
+def preprocess():
+    files = get_files()
+
+    task1, task2 = get_datasets(files)
+
+    print(task1)
+    print(task2)
+    save_datasets(task1, task2)
 
 
 def get_datasets(files):
@@ -114,10 +122,10 @@ def get_datasets(files):
             func_defs += [f for f in ast.walk(
                 tree) if isinstance(f, ast.FunctionDef)]
 
-    func_defs_try_except = [f for f in func_defs if has_except(
-        f) and not has_nested_catch(f)]
+    func_defs_try_except = [f for f in func_defs if check_function_has_except_handler(
+        f) and not check_function_has_nested_try(f)]
 
-    negative_samples = [f for f in func_defs if not has_try(f)]
+    negative_samples = [f for f in func_defs if check_function_has_try(f) == 0]
     try:
         func_defs_no_try = sample(
             negative_samples,
@@ -129,7 +137,7 @@ def get_datasets(files):
     # 	3.1 para cada método, tokeniza os statements do método;
     # 	3.2 se o statement estiver dentro de um try, coloca 1, caso contrário 0;
     dg1 = TryDatasetGenerator(func_defs_try_except + func_defs_no_try)
-    task1 = pd.DataFrame(dg1.generate())
+    task1 = dg1.generate()
 
     # 4. Dataset 2->
     # 	4.1 para cada método, extrair or par {código do método, except):
