@@ -94,7 +94,7 @@ def main(n, iterations, headers):
 
     df.to_csv('projects_gh.csv')
     df.loc[:, ['repo_name', 'url_repo', 'source']].to_csv(
-        'projects_py.csv', index=False)
+        'projects_py.csv', index=False, index_label=['name', 'repo', 'source'])
 
 
 if __name__ == '__main__':

@@ -10,6 +10,8 @@ INDENT_STR = f'<{pytoken.tok_name[pytoken.INDENT]}>'
 DEDENT_STR = f'<{pytoken.tok_name[pytoken.DEDENT]}>'
 NEWLINE_STR = f'<{pytoken.tok_name[pytoken.NEWLINE]}>'
 
+ROOT_DIR = '/home/r4ph/desenv/exception-miner/'
+
 
 def is_identifier(token):
     if re.match(r'\w+', token) and not re.match(r'\d+', token):
@@ -111,7 +113,7 @@ def slicing_mask(front, back):
 
 def mask_slicing(dataset):
     print(dataset)
-    origin_root = 'data/baseline/'
+    origin_root = os.path.join(ROOT_DIR, 'output/py/data/task2/')
     with open(f'{origin_root}src-{dataset}.txt') as fps, open(f'{origin_root}tgt-{dataset}.txt') as fpt:
         origin_src = fps.readlines()
         origin_tgt = fpt.readlines()

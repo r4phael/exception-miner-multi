@@ -75,6 +75,9 @@ def fetch_repositories():
                     print(
                         f"###### Error!!! in project {project} and file: {file}. exception: {str(e)} ##########")
 
+        # Remove repos from disk
+        shutil.rmtree(os.path.join(os.getcwd(), 'projects/py/', project))
+
 
 def get_files():
     paths = pathlib.Path(r'output/py/results/').glob('**/*.py')

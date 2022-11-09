@@ -1,4 +1,4 @@
-,repo_name,url_repo,source
+,name,repo,source
 0,Python,https://github.com/TheAlgorithms/Python,github
 1,awesome-python,https://github.com/vinta/awesome-python,github
 2,transformers,https://github.com/huggingface/transformers,github
