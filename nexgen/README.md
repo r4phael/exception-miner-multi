@@ -12,12 +12,6 @@ Exception handling is an important built-in feature of many modern programming l
 ## Dataset
 Please refer to https://drive.google.com/drive/folders/1tdg2DtvdqY8338g2pTzLQxnUd95nIU2S?usp=sharing for the datasets of the two tasks,  download and unzip them in the corresponding directories. 
 
-## To concatenate source files from sub-directories, do:
-
-```bash
-find /path/to/sources -type f -name '*.py' -exec cat {} + > mergedfile
-```
-
 
 ## Task1: Try block localization
 1. Unzip the data file "task1_data.tar.gz" into task1/data;
