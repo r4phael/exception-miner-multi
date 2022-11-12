@@ -72,20 +72,6 @@ def statement_couter(node: ast.FunctionDef):
     return counter
 
 
-assert (check_function_has_except_handler(get_function_def(ast.parse("""
-def teste():
-    try:
-        print(a)
-    except:
-        pass"""))) == True)
-
-assert (check_function_has_except_handler(get_function_def(ast.parse("""
-def teste():
-    print(a)"""))) == False)
-
-print("has_except test OK")
-
-
 def check_function_has_nested_try(node: ast.AST, has_try_parent=False):
     for child in ast.iter_child_nodes(node):
         is_try = isinstance(child, ast.Try)
@@ -100,64 +86,6 @@ def check_function_has_nested_try(node: ast.AST, has_try_parent=False):
             if has_try and has_try_parent:
                 return True
     return False
-
-
-assert (check_function_has_nested_try(get_function_def(ast.parse("""
-def teste():
-    try:
-        print(a)
-        try:
-            print(a)
-        except:
-            pass
-    except:
-        pass"""))) == True)
-
-assert (check_function_has_nested_try(get_function_def(ast.parse("""
-def teste():
-    try:
-        print(a)
-    except:
-        pass"""))) == False)
-
-assert (check_function_has_nested_try(get_function_def(ast.parse("""
-def teste_nested_try_except():
-    a = 1
-    b = 2
-    b = a
-    print(b)
-    try:
-        c = b
-        print(c)
-        if True:
-            try:
-                print('nested')
-            except Exception:
-                print('falhou')
-    except Exception:
-        print('falhou')
-
-    print(b)"""))) == True)
-
-assert (check_function_has_nested_try(get_function_def(ast.parse("""
-def teste_nested_try_except():
-    a = 1
-    b = 2
-    b = a
-    print(b)
-    try:
-        c = b
-        print(c)
-    except Exception:
-        print('falhou')
-    try:
-        print('nested')
-    except Exception:
-        print('falhou')
-
-    print(b)"""))) == False)
-
-print("has_nested_catch test OK")
 
 
 def get_dataframe_from_pickle(path: str):
