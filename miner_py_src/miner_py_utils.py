@@ -1,6 +1,10 @@
 import ast
+import astunparse
 import pandas as pd
 import time
+import tokenize
+import token
+from io import StringIO
 from enum import Enum
 from .exceptions import TryNotFoundException, FunctionDefNotFoundException
 
@@ -33,6 +37,19 @@ def get_try_slices_recursive(node: ast.FunctionDef):
                 return child, name, try_index
 
     raise TryNotFoundException('Not found')
+
+
+def count_lines(f: ast.FunctionDef, filename=None):
+    try:
+        count = 0
+        for token_info in tokenize.generate_tokens(StringIO(astunparse.unparse(f)).readline):
+            if token_info.type == token.NEWLINE:
+                count += 1
+        return count
+    except tokenize.TokenError as e:
+        print(f'Arquivo: {filename}' if filename is not None else '', e)
+
+    return 0
 
 
 def get_function_def(node: ast.Module):

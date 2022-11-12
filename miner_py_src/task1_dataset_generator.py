@@ -6,6 +6,7 @@ import token
 import tokenize
 import pandas as pd
 from .miner_py_utils import statement_couter, get_function_def, count_try
+from .stats import TBLDStats
 
 from numpy.random import default_rng
 
@@ -14,36 +15,6 @@ rng = default_rng()
 INDENT_STR = f'<{token.tok_name[token.INDENT]}> '
 DEDENT_STR = f'<{token.tok_name[token.DEDENT]}> '
 NEWLINE_STR = f'<{token.tok_name[token.NEWLINE]}> '
-
-
-class TBLDStats:
-    functions_count = 0
-    try_num_eq_1 = 0
-    try_num_lt_eq_2 = 0
-    tokens_count = 0
-    num_max_tokens = 0
-    statements_count = 0
-    num_max_statement = 0
-    # TODO UniqT
-
-    function_tokens_acc = 0
-
-    def increment_try_stats(self, try_count):
-        if try_count == 1:
-            self.try_num_eq_1 += 1
-        elif try_count >= 2:
-            self.try_num_lt_eq_2 += 1
-
-    def __str__(self) -> str:
-        return ('-------- STATS --------\n'
-                f'#Python methods\t{self.functions_count}\n'
-                f'#TryNum=1\t{self.try_num_eq_1}\n'
-                f'#TryNum>=2\t{self.try_num_lt_eq_2}\n'
-                f'#MaxT\t{self.num_max_tokens}\n'
-                f'#AvgT\t{self.tokens_count / self.functions_count if self.functions_count != 0 else 0}\n'
-                f'#MaxS\t{self.num_max_statement}\n'
-                f'#AvgS\t{(self.statements_count / self.functions_count) if self.functions_count != 0 else 0}\n'
-                )
 
 
 class TryDatasetGenerator():
@@ -108,6 +79,7 @@ class TryDatasetGenerator():
                 self.stats.function_tokens_acc += self.indentation_counter
 
             self.stats.function_tokens_acc += len(self.token_buffer)
+            self.stats.unique_tokens.update(self.token_buffer)
 
             self.lines.append(indentation + ' '.join(self.token_buffer))
             self.labels.append(1 if self.try_reached else 0)

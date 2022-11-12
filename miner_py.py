@@ -1,9 +1,10 @@
 from utils import create_logger
-from miner_py_src.split_dataset import save_task1_pkl, save_task2_pkl
+from miner_py_src.split_dataset import save_task1_pkl, save_task2_onmt
 from miner_py_src.miner_py_utils import (
     check_function_has_except_handler,
     check_function_has_nested_try,
     check_function_has_try,
+    count_lines,
 )
 from miner_py_src.task2_dataset_generator import ExceptDatasetGenerator
 from miner_py_src.task1_dataset_generator import TryDatasetGenerator
@@ -26,7 +27,7 @@ seed(10)
 logger = create_logger("exception_py_miner", "exception_py_miner.log")
 
 
-## Functio to sum two
+# Functio to sum two
 
 
 def fetch_repositories():
@@ -44,10 +45,12 @@ def fetch_repositories():
 
         try:
             path = os.path.join(os.getcwd(), "projects/py/", project)
-            git_cmd = "git clone {}.git --recursive {}".format(row["repo"], path)
+            git_cmd = "git clone {}.git --recursive {}".format(
+                row["repo"], path)
             call(git_cmd, shell=True)
             gr = Git(path)
-            logger.warning("Exception Miner: cloned project: {}".format(project))
+            logger.warning(
+                "Exception Miner: cloned project: {}".format(project))
 
         except Exception as e:
             logger.warning(
@@ -128,7 +131,8 @@ def write_files(files, project):
         with open(file, "rb") as f:
             shutil.move(
                 file,
-                "output/py/results/{}/{}".format(project, os.path.basename(file)),
+                "output/py/results/{}/{}".format(project,
+                                                 os.path.basename(file)),
             )
 
 
@@ -144,20 +148,20 @@ def save_datasets(task1: pd.DataFrame, task2: pd.DataFrame):
     os.makedirs("output/py/data", exist_ok=True)
 
     save_task1_pkl(task1)
-    save_task2_pkl(task2)
+    save_task2_onmt(task2)
 
 
 def preprocess():
     files = get_files()
 
-    task1, task2 = get_datasets(files)
+    task1, task2 = build_datasets(files)
 
     print(task1)
     print(task2)
     save_datasets(task1, task2)
 
 
-def get_datasets(files):
+def build_datasets(files):
     task1 = pd.DataFrame()
     task2 = pd.DataFrame()
 
@@ -168,17 +172,18 @@ def get_datasets(files):
         pbar.set_description(f"Processing {str(file)[-40:].ljust(40)}")
         # 1.selecionar arquivos python que contém um try-except
         # 2.pecorrer a AST e verificar quais métodos possuem try-except
-        with open(file) as f:
+        with open(file, 'r') as f:
             try:
                 content = f.read()
                 tree = ast.parse(content)
             except SyntaxError as ex:
                 print(f"###### SyntaxError Error!!! file: {file}.\n{str(ex)}")
-                continue
             except UnicodeDecodeError as ex:
-                print(f"###### UnicodeDecodeError Error!!! file: {file}.\n{str(ex)}")
-                continue
-            func_defs += [f for f in ast.walk(tree) if isinstance(f, ast.FunctionDef)]
+                print(
+                    f"###### UnicodeDecodeError Error!!! file: {file}.\n{str(ex)}")
+            else:
+                func_defs += [f for f in ast.walk(tree) if isinstance(
+                    f, ast.FunctionDef) and 7 < count_lines(f, file) <= 400]
 
     func_defs_try_except = [
         f
@@ -208,7 +213,8 @@ def get_datasets(files):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Repository miner and preprocess.")
+    parser = argparse.ArgumentParser(
+        description="Repository miner and preprocess.")
     parser.add_argument(
         "--mode",
         type=str,
