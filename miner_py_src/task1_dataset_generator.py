@@ -101,7 +101,7 @@ class TryDatasetGenerator():
             if isinstance(n, ast.Try):
                 self.has_catch = len(n.handlers) != 0
                 if not self.has_catch:
-                    return None
+                    continue
                 return [n.lineno, n.handlers[0].lineno]
 
     def handle_indentation_and_newline(self, token_info: tokenize.TokenInfo):
