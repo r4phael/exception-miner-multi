@@ -8,23 +8,29 @@ import tokenize
 
 from numpy.random import default_rng
 
-from .miner_py_utils import TryNotFoundException, get_try_slices_recursive, get_function_def
+from .miner_py_utils import (
+    TryNotFoundException,
+    get_try_slices_recursive,
+    get_function_def,
+)
 
 rng = default_rng()
 
-Slices = namedtuple('Slices', [
-    'try_lineno',
-    'handlers_lineno',
-    'end_lineno',
-])
+Slices = namedtuple(
+    "Slices",
+    [
+        "try_lineno",
+        "handlers_lineno",
+        "end_lineno",
+    ],
+)
 
-INDENT_STR = f'<{token.tok_name[token.INDENT]}> '
-DEDENT_STR = f'<{token.tok_name[token.DEDENT]}> '
-NEWLINE_STR = f'<{token.tok_name[token.NEWLINE]}> '
+INDENT_STR = f"<{token.tok_name[token.INDENT]}> "
+DEDENT_STR = f"<{token.tok_name[token.DEDENT]}> "
+NEWLINE_STR = f"<{token.tok_name[token.NEWLINE]}> "
 
 
-class ExceptDatasetGenerator():
-
+class ExceptDatasetGenerator:
     def __init__(self, func_defs: List[ast.FunctionDef]) -> None:
         self.func_defs = func_defs
         self.reset()
@@ -51,8 +57,10 @@ class ExceptDatasetGenerator():
                 if tokenized_function_def is not None:
                     generated += tokenized_function_def
             except SyntaxError as e:
-                print(
-                    f"###### SyntaxError Error!!! in ast.FunctionDef {f}.\n{str(e)}")
+                print(f"###### SyntaxError Error!!! in ast.FunctionDef {f}.\n{str(e)}")
+                continue
+            except ValueError as e:
+                print(f"###### ValueError Error!!! in ast.FunctionDef {f}.\n{str(e)}")
                 continue
 
         return generated
@@ -63,23 +71,30 @@ class ExceptDatasetGenerator():
 
         indentation = self.indentation_counter * INDENT_STR
 
-        tokenized_line = indentation + ' '.join(self.token_buffer)
+        tokenized_line = indentation + " ".join(self.token_buffer)
         self.token_buffer = []
 
         if self.current_lineno < self.slices.handlers_lineno[0]:
             self.front_lines.append(tokenized_line)
         else:
             current_except_slice = max(
-                [i for i, x in enumerate(self.slices.handlers_lineno) if x <= self.current_lineno])
+                [
+                    i
+                    for i, x in enumerate(self.slices.handlers_lineno)
+                    if x <= self.current_lineno
+                ]
+            )
             self.except_lines[current_except_slice].append(tokenized_line)
 
     def end_of_generation(self):
         res = []
         for except_line in self.except_lines:
-            res.append({
-                'try': self.front_lines,
-                'except': except_line,
-            })
+            res.append(
+                {
+                    "try": self.front_lines,
+                    "except": except_line,
+                }
+            )
 
         self.reset()
 
@@ -90,19 +105,16 @@ class ExceptDatasetGenerator():
 
     def get_slices(self, node: ast.FunctionDef):
         try:
-            try_parent_node, field_name, try_index = get_try_slices_recursive(
-                node)
+            try_parent_node, field_name, try_index = get_try_slices_recursive(node)
         except TryNotFoundException:
             return None
 
-        if (try_index is None):
+        if try_index is None:
             return None
 
-        try_ast: ast.Try = try_parent_node.__getattribute__(field_name)[
-            try_index]
+        try_ast: ast.Try = try_parent_node.__getattribute__(field_name)[try_index]
 
-        except_handlers_line_numbers = [
-            child.lineno for child in try_ast.handlers]
+        except_handlers_line_numbers = [child.lineno for child in try_ast.handlers]
 
         end_lineno = None
         if len(try_ast.orelse) != 0:
@@ -110,33 +122,36 @@ class ExceptDatasetGenerator():
         elif len(try_ast.finalbody) != 0:
             end_lineno = try_ast.finalbody[0].lineno - 1
         elif len(try_parent_node.__getattribute__(field_name)) > try_index + 1:
-            end_lineno = try_parent_node.__getattribute__(
-                field_name)[try_index + 1].lineno
+            end_lineno = try_parent_node.__getattribute__(field_name)[
+                try_index + 1
+            ].lineno
 
-        self.except_lines = [[]
-                             for _ in range(len(except_handlers_line_numbers))]
-        return Slices(try_lineno=try_ast.lineno,
-                      handlers_lineno=except_handlers_line_numbers,
-                      end_lineno=end_lineno)
+        self.except_lines = [[] for _ in range(len(except_handlers_line_numbers))]
+        return Slices(
+            try_lineno=try_ast.lineno,
+            handlers_lineno=except_handlers_line_numbers,
+            end_lineno=end_lineno,
+        )
 
     def handle_indentation_and_newline_and_string(self, token_info: tokenize.TokenInfo):
-        if (token_info.type == token.INDENT):
+        if token_info.type == token.INDENT:
             self.indentation_counter += 1
             return True
 
-        if (token_info.type == token.DEDENT):
+        if token_info.type == token.DEDENT:
             self.indentation_counter -= 1
             self.indentation_counter = max(self.indentation_counter, 0)
             return True
 
-        if (token_info.type == token.NEWLINE):
+        if token_info.type == token.NEWLINE:
             self.token_buffer.append(NEWLINE_STR)
             return True
 
-        if (token_info.type == token.STRING):
+        if token_info.type == token.STRING:
             self.token_buffer.append(token_info.string[0])
             self.token_buffer.append(
-                ''.join(token_info.string[1:-1].splitlines()).strip())
+                "".join(token_info.string[1:-1].splitlines()).strip()
+            )
             self.token_buffer.append(token_info.string[-1])
             return True
         return False
@@ -149,7 +164,7 @@ class ExceptDatasetGenerator():
         if self.slices is None:
             return None
 
-        if ('decorator_list' in node._fields):
+        if "decorator_list" in node._fields:
             node.decorator_list = []
 
         unparsed_code = astunparse.unparse(node)
@@ -159,14 +174,16 @@ class ExceptDatasetGenerator():
                 self.clear_line_buffer()
                 self.current_lineno = token_info.start[0]
 
-                if (self.slices.end_lineno is not None
-                        and self.slices.end_lineno <= self.current_lineno):
+                if (
+                    self.slices.end_lineno is not None
+                    and self.slices.end_lineno <= self.current_lineno
+                ):
                     return self.end_of_generation()
 
-            if (token_info.type in [token.COMMENT, token.NL]):
+            if token_info.type in [token.COMMENT, token.NL]:
                 continue
 
-            if (token_info.type == token.ENDMARKER):
+            if token_info.type == token.ENDMARKER:
                 return self.end_of_generation()
 
             if not self.handle_indentation_and_newline_and_string(token_info):

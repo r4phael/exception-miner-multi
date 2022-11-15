@@ -44,6 +44,7 @@ def fetch_repositories():
 
         try:
             path = os.path.join(os.getcwd(), "projects/py/", project)
+            # TODO: Add flag to yes (fingerprint)
             git_cmd = "git clone {}.git --recursive {}".format(row["repo"], path)
             call(git_cmd, shell=True)
             gr = Git(path)
@@ -117,19 +118,18 @@ def fetch_repositories():
 
 def write_files(files, project):
     for file in files:
-        if os.path.basename(file) in [
+        if os.path.basename(file) not in [
             "__init__.py",
             "__main__.py",
             "setup.py",
             "test.py",
             "tests.py",
         ]:
-            continue
-        with open(file, "rb") as f:
-            shutil.move(
-                file,
-                "output/py/results/{}/{}".format(project, os.path.basename(file)),
-            )
+            with open(file, "rb") as f:
+                shutil.move(
+                    file,
+                    "output/py/results/{}/{}".format(project, os.path.basename(file)),
+                )
 
 
 def get_files():

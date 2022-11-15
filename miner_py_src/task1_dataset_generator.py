@@ -11,9 +11,9 @@ from numpy.random import default_rng
 
 rng = default_rng()
 
-INDENT_STR = f'<{token.tok_name[token.INDENT]}> '
-DEDENT_STR = f'<{token.tok_name[token.DEDENT]}> '
-NEWLINE_STR = f'<{token.tok_name[token.NEWLINE]}> '
+INDENT_STR = f"<{token.tok_name[token.INDENT]}> "
+DEDENT_STR = f"<{token.tok_name[token.DEDENT]}> "
+NEWLINE_STR = f"<{token.tok_name[token.NEWLINE]}> "
 
 
 class TBLDStats:
@@ -35,19 +35,19 @@ class TBLDStats:
             self.try_num_lt_eq_2 += 1
 
     def __str__(self) -> str:
-        return ('-------- STATS --------\n'
-                f'#Python methods\t{self.functions_count}\n'
-                f'#TryNum=1\t{self.try_num_eq_1}\n'
-                f'#TryNum>=2\t{self.try_num_lt_eq_2}\n'
-                f'#MaxT\t{self.num_max_tokens}\n'
-                f'#AvgT\t{self.tokens_count / self.functions_count if self.functions_count != 0 else 0}\n'
-                f'#MaxS\t{self.num_max_statement}\n'
-                f'#AvgS\t{(self.statements_count / self.functions_count) if self.functions_count != 0 else 0}\n'
-                )
+        return (
+            "-------- STATS --------\n"
+            f"#Python methods\t{self.functions_count}\n"
+            f"#TryNum=1\t{self.try_num_eq_1}\n"
+            f"#TryNum>=2\t{self.try_num_lt_eq_2}\n"
+            f"#MaxT\t{self.num_max_tokens}\n"
+            f"#AvgT\t{self.tokens_count / self.functions_count if self.functions_count != 0 else 0}\n"
+            f"#MaxS\t{self.num_max_statement}\n"
+            f"#AvgS\t{(self.statements_count / self.functions_count) if self.functions_count != 0 else 0}\n"
+        )
 
 
-class TryDatasetGenerator():
-
+class TryDatasetGenerator:
     def __init__(self, func_defs: List[ast.FunctionDef]) -> None:
         self.func_defs = func_defs
         self.stats = TBLDStats()
@@ -65,7 +65,8 @@ class TryDatasetGenerator():
         self.token_buffer = []
 
         self.stats.num_max_tokens = max(
-            self.stats.num_max_tokens, self.stats.function_tokens_acc)
+            self.stats.num_max_tokens, self.stats.function_tokens_acc
+        )
         self.stats.tokens_count += self.stats.function_tokens_acc
         self.stats.function_tokens_acc = 0
 
@@ -75,11 +76,9 @@ class TryDatasetGenerator():
         for f in self.func_defs:
             try:
                 # remove lint formatting
-                function_def = get_function_def(
-                    ast.parse(astunparse.unparse(f)))
+                function_def = get_function_def(ast.parse(astunparse.unparse(f)))
 
-                tokenized_function_def = self.tokenize_function_def(
-                    function_def)
+                tokenized_function_def = self.tokenize_function_def(function_def)
 
                 if tokenized_function_def is not None:
                     self.stats.functions_count += 1
@@ -87,11 +86,14 @@ class TryDatasetGenerator():
                     num_statements = statement_couter(function_def)
                     self.stats.statements_count += num_statements
                     self.stats.num_max_statement = max(
-                        self.stats.num_max_statement, num_statements)
+                        self.stats.num_max_statement, num_statements
+                    )
                     generated.append(tokenized_function_def)
             except SyntaxError as e:
-                print(
-                    f"###### SyntaxError Error!!! in ast.FunctionDef {f}.\n{str(e)}")
+                print(f"###### SyntaxError Error!!! in ast.FunctionDef {f}.\n{str(e)}")
+                continue
+            except ValueError as e:
+                print(f"###### ValueError Error!!! in ast.FunctionDef {f}.\n{str(e)}")
                 continue
 
         print(self.stats)
@@ -101,23 +103,22 @@ class TryDatasetGenerator():
         if len(self.token_buffer) != 0:
             if self.try_reached:
                 indentation = (self.indentation_counter - 1) * INDENT_STR
-                self.stats.function_tokens_acc += (
-                    self.indentation_counter - 1)
+                self.stats.function_tokens_acc += self.indentation_counter - 1
             else:
                 indentation = self.indentation_counter * INDENT_STR
                 self.stats.function_tokens_acc += self.indentation_counter
 
             self.stats.function_tokens_acc += len(self.token_buffer)
 
-            self.lines.append(indentation + ' '.join(self.token_buffer))
+            self.lines.append(indentation + " ".join(self.token_buffer))
             self.labels.append(1 if self.try_reached else 0)
         self.token_buffer = []
 
     def end_of_generation(self):
         res = {
-            'hasCatch': 1 if self.has_catch else 0,
-            'lines': self.lines,
-            'labels': self.labels
+            "hasCatch": 1 if self.has_catch else 0,
+            "lines": self.lines,
+            "labels": self.labels,
         }
 
         self.reset()
@@ -133,21 +134,20 @@ class TryDatasetGenerator():
                 return [n.lineno, n.handlers[0].lineno]
 
     def handle_indentation_and_newline(self, token_info: tokenize.TokenInfo):
-        return self.handle_indentation(
-            token_info) or self.handle_new_line(token_info)
+        return self.handle_indentation(token_info) or self.handle_new_line(token_info)
 
     def handle_new_line(self, token_info: tokenize.TokenInfo):
-        if (token_info.type == token.NEWLINE):
+        if token_info.type == token.NEWLINE:
             self.token_buffer.append(NEWLINE_STR)
             return True
         return False
 
     def handle_indentation(self, token_info: tokenize.TokenInfo):
-        if (token_info.type == token.INDENT):
+        if token_info.type == token.INDENT:
             self.indentation_counter += 1
             return True
 
-        if (token_info.type == token.DEDENT):
+        if token_info.type == token.DEDENT:
             self.indentation_counter -= 1
             assert self.indentation_counter >= 0
             return True
@@ -173,11 +173,11 @@ class TryDatasetGenerator():
                 if token_info.start[0] >= try_slice[1]:
                     return self.end_of_generation()
 
-            if (token_info.type in [token.COMMENT, token.NL]):
+            if token_info.type in [token.COMMENT, token.NL]:
                 continue
 
-            if (token_info.type == token.ENDMARKER):
+            if token_info.type == token.ENDMARKER:
                 return self.end_of_generation()
 
-            if (not self.handle_indentation_and_newline(token_info)):
+            if not self.handle_indentation_and_newline(token_info):
                 self.token_buffer.append(token_info.string)
