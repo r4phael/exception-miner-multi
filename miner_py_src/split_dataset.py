@@ -24,7 +24,7 @@ def save_task1_pkl(dataframe: pd.DataFrame):
     test.to_pickle('output/py/data/task1/test.pkl', protocol=4)
 
 
-def save_task2_pkl(dataframe: pd.DataFrame):
+def save_task2_onmt(dataframe: pd.DataFrame):
     train, valid, test = split_dataset(dataframe)
 
     os.makedirs('output/py/data/task2', exist_ok=True)

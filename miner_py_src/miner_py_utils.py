@@ -1,6 +1,10 @@
 import ast
+import astunparse
 import pandas as pd
 import time
+import tokenize
+import token
+from io import StringIO
 from enum import Enum
 from .exceptions import TryNotFoundException, FunctionDefNotFoundException
 
@@ -33,6 +37,19 @@ def get_try_slices_recursive(node: ast.FunctionDef):
                 return child, name, try_index
 
     raise TryNotFoundException('Not found')
+
+
+def count_lines(f: ast.FunctionDef, filename=None):
+    try:
+        count = 0
+        for token_info in tokenize.generate_tokens(StringIO(astunparse.unparse(f)).readline):
+            if token_info.type == token.NEWLINE:
+                count += 1
+        return count
+    except tokenize.TokenError as e:
+        print(f'Arquivo: {filename}' if filename is not None else '', e)
+
+    return 0
 
 
 def get_function_def(node: ast.Module):
@@ -72,20 +89,6 @@ def statement_couter(node: ast.FunctionDef):
     return counter
 
 
-assert (check_function_has_except_handler(get_function_def(ast.parse("""
-def teste():
-    try:
-        print(a)
-    except:
-        pass"""))) == True)
-
-assert (check_function_has_except_handler(get_function_def(ast.parse("""
-def teste():
-    print(a)"""))) == False)
-
-print("has_except test OK")
-
-
 def check_function_has_nested_try(node: ast.AST, has_try_parent=False):
     for child in ast.iter_child_nodes(node):
         is_try = isinstance(child, ast.Try)
@@ -100,64 +103,6 @@ def check_function_has_nested_try(node: ast.AST, has_try_parent=False):
             if has_try and has_try_parent:
                 return True
     return False
-
-
-assert (check_function_has_nested_try(get_function_def(ast.parse("""
-def teste():
-    try:
-        print(a)
-        try:
-            print(a)
-        except:
-            pass
-    except:
-        pass"""))) == True)
-
-assert (check_function_has_nested_try(get_function_def(ast.parse("""
-def teste():
-    try:
-        print(a)
-    except:
-        pass"""))) == False)
-
-assert (check_function_has_nested_try(get_function_def(ast.parse("""
-def teste_nested_try_except():
-    a = 1
-    b = 2
-    b = a
-    print(b)
-    try:
-        c = b
-        print(c)
-        if True:
-            try:
-                print('nested')
-            except Exception:
-                print('falhou')
-    except Exception:
-        print('falhou')
-
-    print(b)"""))) == True)
-
-assert (check_function_has_nested_try(get_function_def(ast.parse("""
-def teste_nested_try_except():
-    a = 1
-    b = 2
-    b = a
-    print(b)
-    try:
-        c = b
-        print(c)
-    except Exception:
-        print('falhou')
-    try:
-        print('nested')
-    except Exception:
-        print('falhou')
-
-    print(b)"""))) == False)
-
-print("has_nested_catch test OK")
 
 
 def get_dataframe_from_pickle(path: str):

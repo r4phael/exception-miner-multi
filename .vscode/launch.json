@@ -16,6 +16,26 @@
                 "--mode",
                 "fetch"
             ]
+        },
+        {
+            "name": "miner preprocess",
+            "type": "python",
+            "request": "launch",
+            "program": "miner_py.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--mode",
+                "preprocess"
+            ]
+        },
+        {
+            "name": "miner demo",
+            "type": "python",
+            "request": "launch",
+            "program": "miner_py_demo_file.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
         }
     ]
 }
