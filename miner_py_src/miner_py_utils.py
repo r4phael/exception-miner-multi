@@ -74,6 +74,14 @@ def count_try(node: ast.FunctionDef):
     return count
 
 
+def count_except(node: ast.FunctionDef):
+    count = 0
+    for child in ast.walk(node):
+        if isinstance(child, ast.ExceptHandler):
+            count += 1
+    return count
+
+
 def check_function_has_except_handler(node: ast.FunctionDef):
     for child in ast.walk(node):
         if isinstance(child, ast.ExceptHandler):

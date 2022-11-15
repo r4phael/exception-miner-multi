@@ -5,6 +5,7 @@ from typing import List
 import astunparse
 import token
 import tokenize
+from .stats import CBGDStats
 
 from numpy.random import default_rng
 
@@ -25,14 +26,15 @@ Slices = namedtuple(
     ],
 )
 
-INDENT_STR = f"<{token.tok_name[token.INDENT]}> "
-DEDENT_STR = f"<{token.tok_name[token.DEDENT]}> "
-NEWLINE_STR = f"<{token.tok_name[token.NEWLINE]}> "
+INDENT_STR = f"<{token.tok_name[token.INDENT]}>"
+DEDENT_STR = f"<{token.tok_name[token.DEDENT]}>"
+NEWLINE_STR = f"<{token.tok_name[token.NEWLINE]}>"
 
 
 class ExceptDatasetGenerator:
     def __init__(self, func_defs: List[ast.FunctionDef]) -> None:
         self.func_defs = func_defs
+        self.stats = CBGDStats()
         self.reset()
 
     def reset(self):
@@ -44,18 +46,23 @@ class ExceptDatasetGenerator:
         self.indentation_counter = 0
         self.token_buffer = []
 
+        self.stats.reset()
+
     def generate(self):
         generated = []
 
         for f in self.func_defs:
             try:
                 # remove lint formatting
-                tree = get_function_def(ast.parse(astunparse.unparse(f)))
+                function_def = get_function_def(ast.parse(astunparse.unparse(f)))
 
-                tokenized_function_def = self.tokenize_function_def(tree)
+                tokenized_function_def = self.tokenize_function_def(function_def)
 
                 if tokenized_function_def is not None:
                     generated += tokenized_function_def
+                    self.stats.increment_function_counter()
+                    self.stats.increment_statements_counter(function_def)
+                    self.stats.increment_except_stats(function_def)
             except SyntaxError as e:
                 print(f"###### SyntaxError Error!!! in ast.FunctionDef {f}.\n{str(e)}")
                 continue
@@ -63,19 +70,24 @@ class ExceptDatasetGenerator:
                 print(f"###### ValueError Error!!! in ast.FunctionDef {f}.\n{str(e)}")
                 continue
 
+        print(self.stats)
         return generated
 
     def clear_line_buffer(self):
         if len(self.token_buffer) == 0:
             return
 
-        indentation = self.indentation_counter * INDENT_STR
+        indentation = " ".join([INDENT_STR for _ in range(self.indentation_counter)])
+        if self.indentation_counter != 0: indentation += ' '
 
         tokenized_line = indentation + " ".join(self.token_buffer)
+        self.stats.unique_tokens.update(self.token_buffer)
+        self.stats.increment_current_num_tokens(len(self.token_buffer) + self.indentation_counter)
         self.token_buffer = []
 
         if self.current_lineno < self.slices.handlers_lineno[0]:
             self.front_lines.append(tokenized_line)
+            self.stats.move_current_num_tokens_source()
         else:
             current_except_slice = max(
                 [
@@ -85,6 +97,7 @@ class ExceptDatasetGenerator:
                 ]
             )
             self.except_lines[current_except_slice].append(tokenized_line)
+            self.stats.move_current_num_tokens_target()
 
     def end_of_generation(self):
         res = []
