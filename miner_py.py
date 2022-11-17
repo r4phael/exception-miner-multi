@@ -45,12 +45,10 @@ def fetch_repositories():
 
         try:
             path = os.path.join(os.getcwd(), "projects/py/", project)
-            git_cmd = "git clone {}.git --recursive {}".format(
-                row["repo"], path)
+            git_cmd = "git clone {}.git --recursive {}".format(row["repo"], path)
             call(git_cmd, shell=True)
             gr = Git(path)
-            logger.warning(
-                "Exception Miner: cloned project: {}".format(project))
+            logger.warning("Exception Miner: cloned project: {}".format(project))
 
         except Exception as e:
             logger.warning(
@@ -70,10 +68,10 @@ def fetch_repositories():
 
             print("File: {}".format(file))
             # print(os.path.basename(file))
-            shutil.copy(file, "except_file.py")
-            output_path = os.path.join(
-                "output/py/files/{}".format(project), os.path.basename(file)
-            )
+            # shutil.copy(file, "except_file.py")
+            # output_path = os.path.join(
+            #     "output/py/files/{}".format(project), os.path.basename(file)
+            # )
             try:
                 with open(file, "rb") as f:
                     content = f.read()
@@ -126,11 +124,19 @@ def write_files(files, project):
             "setup.py",
             "test.py",
             "tests.py",
+            "runtests.py",
         ]:
-            with open(file, "rb") as f:
-                shutil.move(
-                    file,
-                    "output/py/results/{}/{}".format(project, os.path.basename(file)),
+            try:
+                with open(file, "rb") as f:
+                    shutil.move(
+                        file,
+                        "output/py/results/{}/{}".format(
+                            project, os.path.basename(file)
+                        ),
+                    )
+            except FileNotFoundError as e:
+                print(
+                    f"###### Error!!! to locate file in {project} and file: {file}. exception: {str(e)} ##########"
                 )
 
 
@@ -154,8 +160,8 @@ def preprocess():
 
     task1, task2 = build_datasets(files)
 
-    print(task1)
-    print(task2)
+    # print(task1)
+    # print(task2)
     save_datasets(task1, task2)
 
 
@@ -170,18 +176,21 @@ def build_datasets(files):
         pbar.set_description(f"Processing {str(file)[-40:].ljust(40)}")
         # 1.selecionar arquivos python que contém um try-except
         # 2.pecorrer a AST e verificar quais métodos possuem try-except
-        with open(file, 'r') as f:
+        with open(file, "r") as f:
             try:
                 content = f.read()
                 tree = ast.parse(content)
             except SyntaxError as ex:
                 print(f"###### SyntaxError Error!!! file: {file}.\n{str(ex)}")
             except UnicodeDecodeError as ex:
-                print(
-                    f"###### UnicodeDecodeError Error!!! file: {file}.\n{str(ex)}")
+                print(f"###### UnicodeDecodeError Error!!! file: {file}.\n{str(ex)}")
             else:
-                func_defs += [f for f in ast.walk(tree) if isinstance(
-                    f, ast.FunctionDef) and 7 < count_lines(f, file) <= 400]
+                func_defs += [
+                    f
+                    for f in ast.walk(tree)
+                    if isinstance(f, ast.FunctionDef)
+                    and 7 < count_lines(f, file) <= 400
+                ]
 
     func_defs_try_except = [
         f
@@ -211,8 +220,7 @@ def build_datasets(files):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Repository miner and preprocess.")
+    parser = argparse.ArgumentParser(description="Repository miner and preprocess.")
     parser.add_argument(
         "--mode",
         type=str,
