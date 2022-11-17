@@ -65,6 +65,9 @@ def check_function_has_try(node: ast.FunctionDef):
             return True
     return False
 
+def is_bad_except_handling(node: ast.ExceptHandler):
+    return len(node.body) > 0 and isinstance(node.body[0], ast.Pass)
+
 
 def count_try(node: ast.FunctionDef):
     count = 0

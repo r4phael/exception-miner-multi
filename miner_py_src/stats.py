@@ -1,6 +1,33 @@
 from collections import Counter
 import ast
-from miner_py_src.miner_py_utils import count_except, statement_couter
+from miner_py_src.miner_py_utils import count_except, statement_couter, is_bad_except_handling
+
+
+class FileStats:
+    num_files = 0
+    num_functions = 0
+    files_try_except = set()
+    files_try_pass = set()
+    func_try_except = set()
+    func_try_pass = set()
+
+    def metrics(self, f: ast.FunctionDef, file: str):
+        for child in ast.walk(f):
+            if isinstance(child, ast.Try):
+                self.files_try_except.add(file)
+            elif isinstance(child, ast.ExceptHandler):
+                self.func_try_except.add(f"{file}:{f.name}")
+                if is_bad_except_handling(child):
+                    self.func_try_pass.add(f"{file}:{f.name}")
+                    self.files_try_pass.add(file)
+
+    def __str__(self) -> str:
+        return (f"\n---------------- try-except STATS -----------------\n"
+                f"% try-except per file:                {(len(self.files_try_except) / self.num_files) * 100:.2f}%\n"
+                f"% try-except per function definition: {(len(self.func_try_except) / self.num_functions) * 100:.2f}%\n"
+                f"\n---------- (bad practice) try-pass STATS -----------\n"
+                f"% try-pass per file:                  {(len(self.files_try_pass) / self.num_files) * 100:.2f}%\n"
+                f"% try-pass per function definition:   {(len(self.func_try_pass) / self.num_functions) * 100:.2f}%\n")
 
 
 class TBLDStats:
@@ -26,9 +53,9 @@ class TBLDStats:
                      f'#TryNum=1         {self.try_num_eq_1}\n'
                      f'#TryNum≥2         {self.try_num_lt_eq_2}\n'
                      f'#MaxTokens        {self.num_max_tokens}\n'
-                     f'#AverageTokens    {self.tokens_count / self.functions_count if self.functions_count != 0 else 0}\n'
+                     f'#AverageTokens    {self.tokens_count / self.functions_count if self.functions_count != 0 else 0:.2f}\n'
                      f'#MaxStatements    {self.num_max_statement}\n'
-                     f'#AverageStatement {(self.statements_count / self.functions_count) if self.functions_count != 0 else 0}\n'
+                     f'#AverageStatement {(self.statements_count / self.functions_count) if self.functions_count != 0 else 0:.2f}\n'
                      f'#UniqueTokens     {len(self.unique_tokens)}\n'
                      '-------- Top 10 Unique Tokens Ranking --------\n')
 
@@ -96,9 +123,9 @@ class CBGDStats:
                      f'#ExceptNum=1             {self.except_num_eq_1}\n'
                      f'#ExceptNum≥2             {self.except_num_lt_eq_2}\n'
                      f'#MaxTokens of Source     {self.num_max_tokens_source}\n'
-                     f'#AverageTokens of Source {self.tokens_count_source / self.functions_count if self.functions_count != 0 else 0}\n'
+                     f'#AverageTokens of Source {self.tokens_count_source / self.functions_count if self.functions_count != 0 else 0:.2f}\n'
                      f'#MaxTokens of Target     {self.num_max_tokens_target}\n'
-                     f'#AverageTokens of Target {self.tokens_count_target / self.functions_count if self.functions_count != 0 else 0}\n'
+                     f'#AverageTokens of Target {self.tokens_count_target / self.functions_count if self.functions_count != 0 else 0:.2f}\n'
                      f'#UniqueTokens            {len(self.unique_tokens)}\n'
                      '-------- Top 10 Unique Tokens Ranking --------\n')
 

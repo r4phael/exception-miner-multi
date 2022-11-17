@@ -13,6 +13,7 @@ from .miner_py_utils import (
     TryNotFoundException,
     get_try_slices_recursive,
     get_function_def,
+    is_bad_except_handling,
 )
 
 rng = default_rng()
@@ -113,9 +114,6 @@ class ExceptDatasetGenerator:
 
         return res
 
-    def check_pass(self, node: ast.ExceptHandler):
-        return len(node.body) > 0 and not isinstance(node.body[0], ast.Pass)
-
     def get_slices(self, node: ast.FunctionDef):
         try:
             try_parent_node, field_name, try_index = get_try_slices_recursive(node)
@@ -127,7 +125,7 @@ class ExceptDatasetGenerator:
 
         try_ast: ast.Try = try_parent_node.__getattribute__(field_name)[try_index]
 
-        except_handlers_line_numbers = [child.lineno for child in try_ast.handlers]
+        except_handlers_line_numbers = [child.lineno for child in try_ast.handlers if not is_bad_except_handling(child)]
 
         end_lineno = None
         if len(try_ast.orelse) != 0:
@@ -174,7 +172,7 @@ class ExceptDatasetGenerator:
 
         self.slices = self.get_slices(node)
 
-        if self.slices is None:
+        if self.slices is None or len(self.slices.handlers_lineno) == 0:
             return None
 
         if "decorator_list" in node._fields:
