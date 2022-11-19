@@ -1,6 +1,6 @@
 from collections import Counter
 import ast
-from miner_py_src.miner_py_utils import count_except, statement_couter, is_bad_except_handling
+from miner_py_src.miner_py_utils import count_except, statement_couter, is_try_except_pass, is_generic_except
 
 
 class FileStats:
@@ -10,6 +10,7 @@ class FileStats:
     files_try_pass = set()
     func_try_except = set()
     func_try_pass = set()
+    func_generic_except = set()
 
     def metrics(self, f: ast.FunctionDef, file: str):
         for child in ast.walk(f):
@@ -17,17 +18,24 @@ class FileStats:
                 self.files_try_except.add(file)
             elif isinstance(child, ast.ExceptHandler):
                 self.func_try_except.add(f"{file}:{f.name}")
-                if is_bad_except_handling(child):
+                if is_try_except_pass(child):
                     self.func_try_pass.add(f"{file}:{f.name}")
                     self.files_try_pass.add(file)
+                if is_generic_except(child):
+                    print(f"{file}:{f.name}")
+                    self.func_generic_except.add(f"{file}:{f.name}")
 
     def __str__(self) -> str:
         return (f"\n---------------- try-except STATS -----------------\n"
+                f"# try-except found:                   {len(self.func_try_except)}\n"
                 f"% try-except per file:                {(len(self.files_try_except) / self.num_files) * 100:.2f}%\n"
                 f"% try-except per function definition: {(len(self.func_try_except) / self.num_functions) * 100:.2f}%\n"
-                f"\n---------- (bad practice) try-pass STATS -----------\n"
+                f"\n--------------- bad practice STATS ----------------\n"
                 f"% try-pass per file:                  {(len(self.files_try_pass) / self.num_files) * 100:.2f}%\n"
-                f"% try-pass per function definition:   {(len(self.func_try_pass) / self.num_functions) * 100:.2f}%\n")
+                f"% try-pass per function definition:   {(len(self.func_try_pass) / self.num_functions) * 100:.2f}%\n"
+                f"# try-pass:                           {len(self.func_try_pass)}\n"
+                f"# generic exception handling:         {len(self.func_generic_except)}\n"
+                )
 
 
 class TBLDStats:

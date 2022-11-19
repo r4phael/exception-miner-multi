@@ -13,7 +13,7 @@ from .miner_py_utils import (
     TryNotFoundException,
     get_try_slices_recursive,
     get_function_def,
-    is_bad_except_handling,
+    is_bad_exception_handling,
 )
 
 rng = default_rng()
@@ -125,7 +125,7 @@ class ExceptDatasetGenerator:
 
         try_ast: ast.Try = try_parent_node.__getattribute__(field_name)[try_index]
 
-        except_handlers_line_numbers = [child.lineno for child in try_ast.handlers if not is_bad_except_handling(child)]
+        except_handlers_line_numbers = [child.lineno for child in try_ast.handlers if not is_bad_exception_handling(child)]
 
         end_lineno = None
         if len(try_ast.orelse) != 0:

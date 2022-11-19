@@ -5,7 +5,6 @@ from miner_py_src.miner_py_utils import (
     check_function_has_nested_try,
     check_function_has_try,
     count_lines,
-    is_bad_except_handling,
 )
 from miner_py_src.task2_dataset_generator import ExceptDatasetGenerator
 from miner_py_src.task1_dataset_generator import TryDatasetGenerator

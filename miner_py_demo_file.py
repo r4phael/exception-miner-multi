@@ -6,7 +6,9 @@ files = [
     # './miner_py_src/tests/test2.py',
     # './miner_py_src/tests/test3.py',
     # './miner_py_src/tests/test4.py',
-    './miner_py_src/tests/test5.py'
+    # './miner_py_src/tests/test5.py',
+    # './miner_py_src/tests/test6.py',
+    './miner_py_src/tests/bad_exception_handling.py',
 ]
 
 task1, task2 = build_datasets(files)

@@ -65,8 +65,21 @@ def check_function_has_try(node: ast.FunctionDef):
             return True
     return False
 
-def is_bad_except_handling(node: ast.ExceptHandler):
+
+def is_bad_exception_handling(node: ast.ExceptHandler):
+    return is_try_except_pass(node) or is_generic_except(node)
+
+
+def is_try_except_pass(node: ast.ExceptHandler):
     return len(node.body) > 0 and isinstance(node.body[0], ast.Pass)
+
+
+def is_generic_except(node: ast.ExceptHandler):
+    if node.type is None:
+        return True
+    if isinstance(node.type, ast.Name):
+        return node.type.id == 'Exception'
+    return False
 
 
 def count_try(node: ast.FunctionDef):
