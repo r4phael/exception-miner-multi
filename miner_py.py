@@ -65,7 +65,7 @@ def fetch_repositories():
             os.mkdir("output/py/results/{}".format(project))
 
         files = [
-            f for f in gr.files() if pathlib.Path(r"{0}".format(f)).suffix == ".py"
+            f for f in gr.files() if pathlib.Path(r"{0}".format(f)).suffix == ".py" and not os.path.islink(f)
         ]
         for file in tqdm(files):
 
