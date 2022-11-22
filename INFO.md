@@ -1,82 +1,82 @@
-396
+984
 ---------------- try-except STATS -----------------
-# try-except found:                   23451
-% try-except per file:                39.25%
-% try-except per function definition: 17.77%
+# try-except found:                   31669
+% try-except per file:                40.20%
+% try-except per function definition: 19.11%
 
 --------------- bad practice STATS ----------------
-% try-pass per file:                  11.07%
-% try-pass per function definition:   3.36%
-# try-pass:                           4434
-# generic exception handling:         6300
+% try-pass per file:                  11.10%
+% try-pass per function definition:   3.53%
+# try-pass:                           5849
+# generic exception handling:         9313
 
 -------- TBLD STATS --------
-#Python methods   38916
-#TryNum=1         16084
-#TryNum≥2         3373
+#Python methods   52580
+#TryNum=1         21641
+#TryNum≥2         4649
 #MaxTokens        7736
-#AverageTokens    171.21
+#AverageTokens    169.37
 #MaxStatements    99
-#AverageStatement 17.64
-#UniqueTokens     249890
+#AverageStatement 17.62
+#UniqueTokens     320811
 -------- Top 10 Unique Tokens Ranking --------
-( - 571400
-) - 571400
-<NEWLINE>  - 521648
-. - 421832
-, - 373380
-= - 306237
-: - 202876
-self - 134257
-[ - 113979
-] - 113979
+( - 764384
+) - 764384
+<NEWLINE>  - 705088
+. - 561471
+, - 483717
+= - 403224
+: - 271494
+self - 185865
+[ - 152946
+] - 152946
 
 -------- CBGD STATS --------
-#Try-catch pairs         12490
-#ExceptNum=1             9517
-#ExceptNum≥2             2973
+#Try-catch pairs         16346
+#ExceptNum=1             12442
+#ExceptNum≥2             3904
 #MaxTokens of Source     11977
-#AverageTokens of Source 133.80
+#AverageTokens of Source 132.97
 #MaxTokens of Target     1398
-#AverageTokens of Target 50.76
-#UniqueTokens            85912
+#AverageTokens of Target 51.14
+#UniqueTokens            105293
 -------- Top 10 Unique Tokens Ranking --------
-<NEWLINE> - 195611
-( - 163489
-) - 163488
-' - 129354
-. - 117840
-, - 92351
-: - 92188
-= - 83620
-self - 32990
-[ - 28923
+<NEWLINE> - 257280
+) - 214378
+( - 214376
+' - 166330
+. - 155395
+: - 119782
+, - 117768
+= - 107914
+self - 46013
+[ - 37207
 
        hasCatch                                              lines                                             labels
-0             1  [def load_kline_df ( symbol_key ) : <NEWLINE> ...                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
-1             1  [def browser_down_csv_zip ( open_browser = Fal...                                 [0, 0, 1, 1, 1, 1]
-2             1  [@ AbuDeprecated ( 'only read old symbol db, m...         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1]
-3             1  [def __call__ ( self , cls ) : <NEWLINE> , <IN...                     [0, 0, 0, 0, 0, 1, 1, 1, 1, 1]
-4             1  [def __init__ ( self , symbol , json_dict ) : ...  [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, ...
+0             1  [def post_trigger_action ( self ) : <NEWLINE> ...         [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1]
+1             1  [def trigger_action ( self ) : <NEWLINE> , <IN...                                 [0, 0, 0, 0, 1, 1]
+2             1  [def post_trigger_action ( self ) : <NEWLINE> ...                        [0, 1, 1, 1, 1, 1, 1, 1, 1]
+3             1  [def has_bank_count ( device ) : <NEWLINE> , <...                                       [0, 0, 1, 1]
+4             1  [def has_main_bank ( device , definitions ) : ...                                       [0, 0, 1, 1]
 ...         ...                                                ...                                                ...
-38911         0  [def test_fake_update_external_chrome_only ( s...                        [0, 0, 0, 0, 0, 0, 0, 0, 0]
-38912         0  [def _walk_for_powershell ( directory ) : <NEW...                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-38913         0  [def test_send ( self , friend , file_path , i...  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...
-38914         0  [def __str__ ( self , prefix = '' , printElemN...                        [0, 0, 0, 0, 0, 0, 0, 0, 0]
-38915         0  [def _stack_arrays ( tuples , dtype : np . dty...                           [0, 0, 0, 0, 0, 0, 0, 0]
+52575         0  [def user_has_add_permission ( self , user , p...                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+52576         0  [def _check_bom ( self ) : <NEWLINE> , <INDENT...               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+52577         0  [def slowparts ( d , re , preDz , preWz , SRW ...                        [0, 0, 0, 0, 0, 0, 0, 0, 0]
+52578         0  [def __init__ ( self , ** kwargs ) : <NEWLINE>...  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...
+52579         0  [def __init__ ( self , field_name , row ) : <N...               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
-[38916 rows x 3 columns]
+[52580 rows x 3 columns]
                                                      try                                             except
-0      [def load_kline_df ( symbol_key ) : <NEWLINE>,...  [<INDENT> except HDF5ExtError as e : <NEWLINE>...
-1      [def kline_pd ( symbol , data_mode , n_folds =...  [<INDENT> except HDF5ExtError : <NEWLINE>, <IN...
-2      [def __get__ ( self , obj , p_type = None ) : ...  [<INDENT> <INDENT> <INDENT> except AttributeEr...
-3      [def load_pickle ( file_name ) : <NEWLINE>, <I...  [<INDENT> except EOFError : <NEWLINE>, <INDENT...
-4      [def _parse_version ( version_string ) : <NEWL...  [<INDENT> <INDENT> except ValueError : <NEWLIN...
+0      [def post_trigger_action ( self ) : <NEWLINE>,...  [<INDENT> <INDENT> except Live . Base . Limita...
+1      [def post_trigger_action ( self ) : <NEWLINE>,...  [<INDENT> <INDENT> except RuntimeError : <NEWL...
+2      [def has_main_bank ( device , definitions ) : ...  [<INDENT> <INDENT> except ( AttributeError , R...
+3      [def has_bank_names ( device , definitions ) :...  [<INDENT> <INDENT> except ( AttributeError , R...
+4      [def _set_skin_light ( self , value ) : <NEWLI...  [<INDENT> except SkinColorMissingError : <NEWL...
 ...                                                  ...                                                ...
-13571  [def fetch_tweet_data ( tweet_id : str ) -> Op...  [<INDENT> <INDENT> <INDENT> raise <NEWLINE>, <...
-13572  [def fetch_tweet_data ( tweet_id : str ) -> Op...  [<INDENT> <INDENT> <INDENT> t = e . args [ 0 ]...
-13573  [def fetch_open_graph_image ( url : str ) -> O...  [<INDENT> except requests . RequestException :...
-13574  [def sanitize_url ( url : str ) -> Optional [ ...  [<INDENT> except ValueError : <NEWLINE>, <INDE...
-13575  [def topic_links ( linkifiers_key : int , topi...  [<INDENT> <INDENT> except re2 . error : <NEWLI...
+17830  [def fetch_tweet_data ( tweet_id : str ) -> Op...  [<INDENT> <INDENT> <INDENT> t = e . args [ 0 ]...
+17831  [def fetch_open_graph_image ( url : str ) -> O...  [<INDENT> except requests . RequestException :...
+17832  [def sanitize_url ( url : str ) -> Optional [ ...  [<INDENT> except ValueError : <NEWLINE>, <INDE...
+17833  [def topic_links ( linkifiers_key : int , topi...  [<INDENT> <INDENT> except re2 . error : <NEWLI...
+17834  [def runsource ( self , source : str , filenam...  [<INDENT> except ( ValueError , SyntaxError ) ...
 
-[13576 rows x 2 columns]
+[17835 rows x 2 columns]
