@@ -12,10 +12,14 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": [
-                "--mode",
-                "fetch"
-            ]
+        },
+        {
+            "name": "miner_py",
+            "type": "python",
+            "request": "launch",
+            "program": "miner_py.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
         },
         {
             "name": "miner preprocess",

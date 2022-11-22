@@ -29,10 +29,10 @@ class FileStats:
         return (f"\n---------------- try-except STATS -----------------\n"
                 f"# try-except found:                   {len(self.func_try_except)}\n"
                 f"% try-except per file:                {(len(self.files_try_except) / self.num_files) * 100:.2f}%\n"
-                f"% try-except per function definition: {(len(self.func_try_except) / self.num_functions) * 100:.2f}%\n"
+                f"% try-except per function definition: {(len(self.func_try_except) / max(self.num_functions, 1)) * 100:.2f}%\n"
                 f"\n--------------- bad practice STATS ----------------\n"
                 f"% try-pass per file:                  {(len(self.files_try_pass) / self.num_files) * 100:.2f}%\n"
-                f"% try-pass per function definition:   {(len(self.func_try_pass) / self.num_functions) * 100:.2f}%\n"
+                f"% try-pass per function definition:   {(len(self.func_try_pass) / max(self.num_functions, 1)) * 100:.2f}%\n"
                 f"# try-pass:                           {len(self.func_try_pass)}\n"
                 f"# generic exception handling:         {len(self.func_generic_except)}\n"
                 )
