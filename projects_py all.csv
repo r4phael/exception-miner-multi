@@ -236,7 +236,6 @@
 234,glow,https://github.com/openai/glow,github
 235,backtesting.py,https://github.com/kernc/backtesting.py,github
 236,clay,https://github.com/golemfactory/clay,github
-237,Cobra,https://github.com/FeeiCN/Cobra,github
 238,coremltools,https://github.com/apple/coremltools,github
 239,archivy,https://github.com/archivy/archivy,github
 240,ansible-lint,https://github.com/ansible/ansible-lint,github
@@ -390,12 +389,10 @@
 389,aws-mfa,https://github.com/broamski/aws-mfa,github
 390,docker-autocompose,https://github.com/Red5d/docker-autocompose,github
 391,speechpy,https://github.com/astorfi/speechpy,github
-392,BlackMamba,https://github.com/loseys/BlackMamba,github
 393,chatbot-rnn,https://github.com/pender/chatbot-rnn,github
 394,django-ratelimit,https://github.com/jsocol/django-ratelimit,github
 395,kapre,https://github.com/keunwoochoi/kapre,github
 396,pgoapi,https://github.com/pogodevorg/pgoapi,github
-397,vulnerability-paper,https://github.com/MrWQ/vulnerability-paper,github
 398,snakebite,https://github.com/spotify/snakebite,github
 399,xwaf,https://github.com/3xp10it/xwaf,github
 400,deimos,https://github.com/mesosphere-backup/deimos,github
@@ -534,7 +531,6 @@
 533,Intensio-Obfuscator,https://github.com/Hnfull/Intensio-Obfuscator,github
 534,omnisharp-sublime,https://github.com/OmniSharp/omnisharp-sublime,github
 535,pypandoc,https://github.com/JessicaTegner/pypandoc,github
-536,Sickle,https://github.com/wetw0rk/Sickle,github
 537,diy-lang,https://github.com/kvalle/diy-lang,github
 538,magicavoxel-shaders,https://github.com/lachlanmcdonald/magicavoxel-shaders,github
 539,django-rest-hooks,https://github.com/zapier/django-rest-hooks,github
@@ -567,7 +563,6 @@
 566,census,https://github.com/datamade/census,github
 567,pip-update-requirements,https://github.com/alanhamlett/pip-update-requirements,github
 568,ppgn,https://github.com/Evolving-AI-Lab/ppgn,github
-569,CVE-2017-11882,https://github.com/Ridter/CVE-2017-11882,github
 570,rl_a3c_pytorch,https://github.com/dgriff777/rl_a3c_pytorch,github
 571,PhoneSploit,https://github.com/aerosol-can/PhoneSploit,github
 572,SmashBot,https://github.com/altf4/SmashBot,github
@@ -616,7 +611,6 @@
 615,Util,https://github.com/carya/Util,github
 616,django-frontendadmin,https://github.com/bartTC/django-frontendadmin,github
 617,django-denorm,https://github.com/django-denorm/django-denorm,github
-618,python-x86-obfuscator,https://github.com/kgretzky/python-x86-obfuscator,github
 619,django-wshop,https://github.com/bangq/django-wshop,github
 620,dkeras,https://github.com/dkeras-project/dkeras,github
 621,kubernetes-mastery,https://github.com/BretFisher/kubernetes-mastery,github
@@ -747,7 +741,6 @@
 746,mmfewshot,https://github.com/open-mmlab/mmfewshot,github
 747,MAIAN,https://github.com/ivicanikolicsg/MAIAN,github
 748,Arnold,https://github.com/glample/Arnold,github
-749,OSCP,https://github.com/areyou1or0/OSCP,github
 750,LanZouCloud-CMD,https://github.com/zaxtyson/LanZouCloud-CMD,github
 751,pylgbst,https://github.com/undera/pylgbst,github
 752,DeepHeart,https://github.com/jisaacso/DeepHeart,github
@@ -801,7 +794,6 @@
 800,Python-web-scraping,https://github.com/LUCY78765580/Python-web-scraping,github
 801,Sublimall,https://github.com/toxinu/Sublimall,github
 802,Houdini,https://github.com/kiryha/Houdini,github
-803,FuckThatPacker,https://github.com/Unknow101/FuckThatPacker,github
 804,tf-image-segmentation,https://github.com/warmspringwinds/tf-image-segmentation,github
 805,XBMCnfoMoviesImporter.bundle,https://github.com/gboudreau/XBMCnfoMoviesImporter.bundle,github
 806,django-image-cropping,https://github.com/jonasundderwolf/django-image-cropping,github
@@ -845,7 +837,6 @@
 844,nex-code,https://github.com/nex-mpi/nex-code,github
 845,ATM,https://github.com/HDI-Project/ATM,github
 846,typesystem,https://github.com/encode/typesystem,github
-847,fuzzdb-collect,https://github.com/euphrat1ca/fuzzdb-collect,github
 848,phillip,https://github.com/vladfi1/phillip,github
 849,SillyRAT,https://github.com/hash3liZer/SillyRAT,github
 850,python-snippets,https://github.com/progrmoiz/python-snippets,github
@@ -986,7 +977,6 @@
 985,sparse,https://github.com/pydata/sparse,github
 986,flexible-yolov5,https://github.com/Bobo-y/flexible-yolov5,github
 987,chopshop,https://github.com/MITRECND/chopshop,github
-988,crowsec,https://github.com/crow821/crowsec,github
 989,tensorflow-tutorial-samples,https://github.com/geektutu/tensorflow-tutorial-samples,github
 990,fcitx5-pinyin-zhwiki,https://github.com/felixonmars/fcitx5-pinyin-zhwiki,github
 991,twitch-dl,https://github.com/ihabunek/twitch-dl,github
@@ -1038,7 +1028,6 @@
 1037,py_ml_utils,https://github.com/gatapia/py_ml_utils,github
 1038,CollaborativeMemoryNetwork,https://github.com/tebesu/CollaborativeMemoryNetwork,github
 1039,cmus-osx,https://github.com/PhilipTrauner/cmus-osx,github
-1040,CTF_WRITEUPS,https://github.com/smokeleeteveryday/CTF_WRITEUPS,github
 1041,psycopg2-windows,https://github.com/nwcell/psycopg2-windows,github
 1042,OpenFacePytorch,https://github.com/thnkim/OpenFacePytorch,github
 1043,FCHarDNet,https://github.com/PingoLH/FCHarDNet,github
@@ -1347,7 +1336,6 @@
 1346,pygreen,https://github.com/nicolas-van/pygreen,github
 1347,XLnet-gen,https://github.com/rusiaaman/XLnet-gen,github
 1348,CS294,https://github.com/Observerspy/CS294,github
-1349,Exploits,https://github.com/r0t0tiller/Exploits,github
 1350,pycarplay,https://github.com/electric-monk/pycarplay,github
 1351,isbnlib,https://github.com/xlcnd/isbnlib,github
 1352,curso_docker,https://github.com/matheusbattisti/curso_docker,github
@@ -1394,7 +1382,6 @@
 1393,Prompt-BERT,https://github.com/kongds/Prompt-BERT,github
 1394,python-turtle-draw-svg,https://github.com/tfx2001/python-turtle-draw-svg,github
 1395,MathsFromExamples,https://github.com/facebookresearch/MathsFromExamples,github
-1396,PoC-Exploits,https://github.com/CERTCC/PoC-Exploits,github
 1397,redis-dump-load,https://github.com/p/redis-dump-load,github
 1398,SBERT-WK-Sentence-Embedding,https://github.com/BinWang28/SBERT-WK-Sentence-Embedding,github
 1399,mulrel-nel,https://github.com/lephong/mulrel-nel,github
@@ -1482,7 +1469,6 @@
 1481,pygreen,https://github.com/nicolas-van/pygreen,github
 1482,XLnet-gen,https://github.com/rusiaaman/XLnet-gen,github
 1483,CS294,https://github.com/Observerspy/CS294,github
-1484,Exploits,https://github.com/r0t0tiller/Exploits,github
 1485,punctuation,https://github.com/adamjcalhoun/punctuation,github
 1486,FunnelAct,https://github.com/megvii-model/FunnelAct,github
 1487,AutoDD_Rev2,https://github.com/kaito1410/AutoDD_Rev2,github
@@ -2010,7 +1996,6 @@
 2009,The-Django-gunicorn-fabfile-project,https://github.com/alexisbellido/The-Django-gunicorn-fabfile-project,github
 2010,crucible,https://github.com/astanway/crucible,github
 2011,graphserver,https://github.com/bmander/graphserver,github
-2012,Exploit-Unknown-Gradually,https://github.com/Yu-Wu/Exploit-Unknown-Gradually,github
 2013,leveldb-server,https://github.com/srinikom/leveldb-server,github
 2014,Beatbox,https://github.com/superfell/Beatbox,github
 2015,ara-archive,https://github.com/dmsimard/ara-archive,github
@@ -2205,7 +2190,6 @@
 2204,microservices-in-action,https://github.com/morganjbruce/microservices-in-action,github
 2205,incubator-liminal,https://github.com/apache/incubator-liminal,github
 2206,pyeapi,https://github.com/arista-eosplus/pyeapi,github
-2207,OSCE-Exploit-Development,https://github.com/areyou1or0/OSCE-Exploit-Development,github
 2208,phpserialize,https://github.com/mitsuhiko/phpserialize,github
 2209,OCR_Japanease,https://github.com/tanreinama/OCR_Japanease,github
 2210,cloud-sql-python-connector,https://github.com/GoogleCloudPlatform/cloud-sql-python-connector,github
@@ -2574,7 +2558,6 @@
 2573,chainer-compiler,https://github.com/pfnet-research/chainer-compiler,github
 2574,sockjs,https://github.com/aio-libs/sockjs,github
 2575,pytorch-detect-to-track,https://github.com/Feynman27/pytorch-detect-to-track,github
-2576,python-buffered-reader-exploit,https://github.com/kn32/python-buffered-reader-exploit,github
 2577,kaggle-freesound-audio-tagging,https://github.com/sainathadapa/kaggle-freesound-audio-tagging,github
 2578,gnsspy,https://github.com/GNSSpy-Project/gnsspy,github
 2579,tensorflow-examples,https://github.com/Gateway11/tensorflow-examples,github
@@ -2883,7 +2866,6 @@
 2882,chainer-compiler,https://github.com/pfnet-research/chainer-compiler,github
 2883,sockjs,https://github.com/aio-libs/sockjs,github
 2884,pytorch-detect-to-track,https://github.com/Feynman27/pytorch-detect-to-track,github
-2885,python-buffered-reader-exploit,https://github.com/kn32/python-buffered-reader-exploit,github
 2886,kaggle-freesound-audio-tagging,https://github.com/sainathadapa/kaggle-freesound-audio-tagging,github
 2887,gnsspy,https://github.com/GNSSpy-Project/gnsspy,github
 2888,tensorflow-examples,https://github.com/Gateway11/tensorflow-examples,github
@@ -3397,7 +3379,6 @@
 3396,alchimia,https://github.com/alex/alchimia,github
 3397,pyramid_celery,https://github.com/sontek/pyramid_celery,github
 3398,barva,https://github.com/Kharacternyk/barva,github
-3399,Upnp-Exploiter,https://github.com/dc414/Upnp-Exploiter,github
 3400,codehub,https://github.com/codehub-ir/codehub,github
 3401,NJUNMT-tf,https://github.com/zhaocq-nlp/NJUNMT-tf,github
 3402,TimeMachine,https://github.com/DroidTest/TimeMachine,github
@@ -4070,7 +4051,6 @@
 4069,pynif3d,https://github.com/pfnet/pynif3d,github
 4070,RetroCodes,https://github.com/eyounx/RetroCodes,github
 4071,django-webodt,https://github.com/NetAngels/django-webodt,github
-4072,ubuntu-apport-exploitation,https://github.com/DonnchaC/ubuntu-apport-exploitation,github
 4073,cbapi,https://github.com/vmware-archive/cbapi,github
 4074,obfsproxy,https://github.com/isislovecruft/obfsproxy,github
 4075,xss_scan,https://github.com/Q2h1Cg/xss_scan,github
@@ -4120,7 +4100,6 @@
 4119,RetroCodes,https://github.com/eyounx/RetroCodes,github
 4120,nengo-1.4,https://github.com/nengo/nengo-1.4,github
 4121,django-webodt,https://github.com/NetAngels/django-webodt,github
-4122,ubuntu-apport-exploitation,https://github.com/DonnchaC/ubuntu-apport-exploitation,github
 4123,cbapi,https://github.com/vmware-archive/cbapi,github
 4124,obfsproxy,https://github.com/isislovecruft/obfsproxy,github
 4125,xss_scan,https://github.com/Q2h1Cg/xss_scan,github
