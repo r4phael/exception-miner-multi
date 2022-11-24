@@ -1,12 +1,13 @@
 import ast
 import io
-from typing import List, Dict
+from typing import List
 import astunparse
 import token
 import tokenize
 import pandas as pd
 from .miner_py_utils import statement_couter, get_function_def, count_try
 from .stats import TBLDStats
+from tqdm import tqdm
 
 from numpy.random import default_rng
 
@@ -19,9 +20,9 @@ NEWLINE_STR = f"<{token.tok_name[token.NEWLINE]}> "
 
 class TryDatasetGenerator():
 
-    def __init__(self, func_defs: List[ast.FunctionDef]) -> None:
+    def __init__(self, func_defs: List[ast.FunctionDef], stats: TBLDStats) -> None:
         self.func_defs = func_defs
-        self.stats = TBLDStats()
+        self.stats = stats
         self.reset()
 
     def reset(self):
@@ -44,12 +45,12 @@ class TryDatasetGenerator():
     def generate(self):
         generated = []
 
-        for f in self.func_defs:
+        pbar = tqdm(self.func_defs)
+        for function_def in pbar:
+            pbar.set_description(f"Function: {function_def.name[-40:].ljust(40)}")
             try:
-                # remove lint formatting
-                function_def = get_function_def(ast.parse(astunparse.unparse(f)))
-
-                tokenized_function_def = self.tokenize_function_def(function_def)
+                tokenized_function_def = self.tokenize_function_def(
+                    function_def)
 
                 if tokenized_function_def is not None:
                     self.stats.functions_count += 1
@@ -61,13 +62,20 @@ class TryDatasetGenerator():
                     )
                     generated.append(tokenized_function_def)
             except SyntaxError as e:
-                print(f"###### SyntaxError Error!!! in ast.FunctionDef {f}.\n{str(e)}")
+                print(
+                    f"###### SyntaxError Error!!! in ast.FunctionDef {function_def}.\n{str(e)}")
                 continue
             except ValueError as e:
-                print(f"###### ValueError Error!!! in ast.FunctionDef {f}.\n{str(e)}")
+                print(
+                    f"###### ValueError Error!!! in ast.FunctionDef {function_def}.\n{str(e)}")
+                continue
+            except MemoryError as e:
+                print(
+                    f"###### MemoryError Error!!! in ast.FunctionDef {function_def}.\n{str(e)}")
+                print(function_def.name)
+                print(astunparse.unparse(function_def))
                 continue
 
-        print(self.stats)
         return pd.DataFrame(generated)
 
     def clear_line_buffer(self):
@@ -89,7 +97,6 @@ class TryDatasetGenerator():
 
         self.lines.append(tokenized_line)
         self.labels.append(1 if self.try_reached else 0)
-       
 
     def end_of_generation(self):
         res = {

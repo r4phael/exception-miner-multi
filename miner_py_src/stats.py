@@ -1,6 +1,7 @@
 from collections import Counter
 import ast
 from miner_py_src.miner_py_utils import count_except, statement_couter, is_try_except_pass, is_generic_except
+from tqdm import tqdm
 
 
 class FileStats:
@@ -22,7 +23,7 @@ class FileStats:
                     self.func_try_pass.add(f"{file}:{f.name}")
                     self.files_try_pass.add(file)
                 if is_generic_except(child):
-                    print(f"{file}:{f.name}")
+                    tqdm.write(f"{file}:{f.name}")
                     self.func_generic_except.add(f"{file}:{f.name}")
 
     def __str__(self) -> str:

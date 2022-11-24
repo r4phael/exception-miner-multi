@@ -7,6 +7,7 @@ import token
 from io import StringIO
 from enum import Enum
 from .exceptions import TryNotFoundException, FunctionDefNotFoundException
+from tqdm import tqdm
 
 
 class bcolors(Enum):
@@ -47,7 +48,8 @@ def count_lines(f: ast.FunctionDef, filename=None):
                 count += 1
         return count
     except tokenize.TokenError as e:
-        print(f'Arquivo: {filename}' if filename is not None else '', e)
+        tqdm.write(f'Arquivo: {filename}' if filename is not None else '')
+        tqdm.write(str(e))
 
     return 0
 
@@ -127,10 +129,6 @@ def check_function_has_nested_try(node: ast.AST, has_try_parent=False):
             if has_try and has_try_parent:
                 return True
     return False
-
-
-def get_dataframe_from_pickle(path: str):
-    return pd.read_pickle(path)
 
 
 def print_pair_task1(df, delay=0):

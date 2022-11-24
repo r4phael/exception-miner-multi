@@ -33,9 +33,9 @@ NEWLINE_STR = f"<{token.tok_name[token.NEWLINE]}>"
 
 
 class ExceptDatasetGenerator:
-    def __init__(self, func_defs: List[ast.FunctionDef]) -> None:
+    def __init__(self, func_defs: List[ast.FunctionDef], stats: CBGDStats) -> None:
         self.func_defs = func_defs
-        self.stats = CBGDStats()
+        self.stats = stats
         self.reset()
 
     def reset(self):
@@ -55,7 +55,7 @@ class ExceptDatasetGenerator:
         for f in self.func_defs:
             try:
                 # remove lint formatting
-                function_def = get_function_def(ast.parse(astunparse.unparse(f)))
+                function_def = f
 
                 tokenized_function_def = self.tokenize_function_def(function_def)
 
@@ -71,7 +71,6 @@ class ExceptDatasetGenerator:
                 print(f"###### ValueError Error!!! in ast.FunctionDef {f}.\n{str(e)}")
                 continue
 
-        print(self.stats)
         return generated
 
     def clear_line_buffer(self):
