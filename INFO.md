@@ -1,4 +1,4 @@
----------------- try-except STATS -----------------
+```---------------- try-except STATS -----------------
 # try-except found:                   61315
 % try-except per file:                43.58%
 % try-except per function definition: 21.54%
