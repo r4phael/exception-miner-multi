@@ -5,6 +5,14 @@ class MinerPyError(Exception):
 class TryNotFoundException(MinerPyError):
     pass
 
+class ExceptClauseExpectedException(MinerPyError):
+    pass
+
 
 class FunctionDefNotFoundException(MinerPyError):
     pass
+
+
+class TreeSitterNodeException(MinerPyError):
+    pass
+

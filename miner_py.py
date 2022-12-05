@@ -1,26 +1,28 @@
-from utils import create_logger, batch
-from miner_py_src.split_dataset import save_task1_pkl, save_task2_onmt, merge_task1_pkl
-from miner_py_src.miner_py_utils import (
-    check_function_has_except_handler,
-    check_function_has_nested_try,
-    check_function_has_try,
-    count_lines,
-)
-from miner_py_src.task2_dataset_generator import ExceptDatasetGenerator
-from miner_py_src.task1_dataset_generator import TryDatasetGenerator
 import argparse
-import pandas as pd
-import pathlib
 import os
+import pathlib
 import shutil
-import ast
-from tqdm import tqdm
-
+from random import sample, seed
 # from subprocess import call
 from subprocess import call
+from typing import List
+
+import pandas as pd
 from pydriller import Git
-from random import sample, seed
-from miner_py_src.stats import FileStats, TBLDStats, CBGDStats
+from tqdm import tqdm
+from tree_sitter.binding import Node
+
+from miner_py_src.miner_py_utils import (check_function_has_except_handler,
+                                         check_function_has_nested_try,
+                                         check_function_has_try, count_lines_of_function_body,
+                                         get_function_defs, is_bad_exception_handling)
+from miner_py_src.split_dataset import (merge_task1_pkl, save_task1_pkl,
+                                        save_task2_onmt)
+from miner_py_src.stats import CBGDStats, FileStats, TBLDStats
+from miner_py_src.task1_dataset_generator import TryDatasetGenerator
+from miner_py_src.task2_dataset_generator import ExceptDatasetGenerator
+from miner_py_src.tree_sitter_lang import parser as tree_sitter_parser
+from utils import batch, create_logger
 
 seed(10)
 
@@ -68,35 +70,22 @@ def fetch_repositories():
             f for f in gr.files() if pathlib.Path(r"{0}".format(f)).suffix == ".py" and not os.path.islink(f)
         ]
         for file in tqdm(files):
-
             print("File: {}".format(file))
-            # print(os.path.basename(file))
-            shutil.copy(file, "except_file.py")
-            output_path = os.path.join(
-                "output/py/files/{}".format(project), os.path.basename(file)
-            )
             try:
                 with open(file, "rb") as f:
                     content = f.read()
-                    tree = ast.parse(content)
-                    # print(tree)
-                for node in ast.walk(tree):
-                    if isinstance(node, ast.ExceptHandler):
-                        print(
-                            "###### File {0} in project {1} have exception: {2}.#######".format(
-                                file, project, str(node)
-                            )
-                        )
-                        f.close()
-                        shutil.move(
-                            file,
-                            "output/py/results/{}/{}".format(
-                                project, os.path.basename(file)
-                            ),
-                        )
+                    tree = tree_sitter_parser.parse(content)
 
-                        files_with_try.append(file)
-
+                if check_function_has_except_handler(tree.root_node):
+                    print(
+                        f"###### File {file} in project {project} have exception.#######")
+                    shutil.move(
+                        file,
+                        "output/py/results/{}/{}".format(
+                            project, os.path.basename(file)
+                        ),
+                    )
+                    files_with_try.append(file)
             except Exception as e:
                 print(
                     f"###### Error!!! in project {project} and file: {file}. exception: {str(e)} ##########"
@@ -180,12 +169,12 @@ def build_datasets(files: list, file_stats: FileStats, tbld_stats: TBLDStats, cg
     task2 = []
 
     pbar = tqdm(files)
-    func_defs = []
+    func_defs: List[Node] = []
     for file_path in pbar:
         pbar.set_description(
             f"Processing {str(file_path)[-40:].ljust(40)}")
 
-        with open(file_path, 'r') as file:
+        with open(file_path, 'rb') as file:
             try:
                 content = file.read()
             except UnicodeDecodeError as ex:
@@ -193,19 +182,18 @@ def build_datasets(files: list, file_stats: FileStats, tbld_stats: TBLDStats, cg
                     f"###### UnicodeDecodeError Error!!! file: {file_path}.\n{str(ex)}")
                 continue
         try:
-            tree = ast.parse(content)
+            tree = tree_sitter_parser.parse(content)
         except SyntaxError as ex:
             tqdm.write(
                 f"###### SyntaxError Error!!! file: {file_path}.\n{str(ex)}")
         else:
-            for child in ast.walk(tree):
-                if not isinstance(child, ast.FunctionDef):
-                    continue
-
-                if 7 < count_lines(child, file_path) <= 100:
+            captures = get_function_defs(tree)
+            for child in captures:
+                if 7 < count_lines_of_function_body(child, file_path) <= 100:
                     func_defs.append(child)
 
                 file_stats.metrics(child, file_path)
+
     file_stats.num_files += len(files)
     file_stats.num_functions += len(func_defs)
 
@@ -227,7 +215,10 @@ def build_datasets(files: list, file_stats: FileStats, tbld_stats: TBLDStats, cg
         func_defs_try_except + func_defs_no_try, tbld_stats)
     task1.append(dg1.generate())
 
-    dg2 = ExceptDatasetGenerator(func_defs_try_except, cgbd_stats)
+    func_defs_filter_bad_exception = [
+        f for f in func_defs_try_except if not is_bad_exception_handling(f)]
+    dg2 = ExceptDatasetGenerator(
+        func_defs_filter_bad_exception, cgbd_stats)
     task2.append(pd.DataFrame(dg2.generate()))
 
     return pd.concat(task1), pd.concat(task2)

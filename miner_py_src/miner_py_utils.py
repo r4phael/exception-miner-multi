@@ -1,133 +1,149 @@
-import ast
-import astunparse
-import pandas as pd
 import time
-import tokenize
-import token
-from io import StringIO
+from collections import namedtuple
 from enum import Enum
-from .exceptions import TryNotFoundException, FunctionDefNotFoundException
+from typing import List
+
+import pandas as pd
+from termcolor import colored
 from tqdm import tqdm
+from tree_sitter.binding import Node, Tree
+
+from miner_py_src.tree_sitter_lang import (QUERY_EXCEPT_CLAUSE,
+                                           QUERY_EXCEPT_EXPRESSION,
+                                           QUERY_EXPRESSION_STATEMENT,
+                                           QUERY_FIND_IDENTIFIERS,
+                                           QUERY_FUNCTION_DEF,
+                                           QUERY_PASS_BLOCK, QUERY_TRY_EXCEPT,
+                                           QUERY_TRY_STMT)
+
+from .exceptions import (ExceptClauseExpectedException,
+                         FunctionDefNotFoundException, TryNotFoundException)
+
+Slices = namedtuple(
+    "Slices",
+    [
+        "try_block_start",
+        "handlers",
+    ],
+)
 
 
 class bcolors(Enum):
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKCYAN = '\033[96m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+    WARNING = 'yellow'
+    HEADER = 'blue'
+    OKGREEN = 'green'
+    FAIL = 'red'
 
 
-# TODO criar testes
-def get_try_slices_recursive(node: ast.FunctionDef):
-    for child in ast.walk(node):
-        for name, fields in ast.iter_fields(child):
-            if type(fields) == list:
-                nodes_list = [index for index, child_body in enumerate(
-                    fields) if isinstance(child_body, ast.Try)]
-                for try_index in nodes_list:
-                    try_node = child.__getattribute__(name)[try_index]
-                    if isinstance(try_node, ast.Try) and len(try_node.handlers) != 0:
-                        return child, name, try_index
-            elif isinstance(fields, ast.Try) and len(fields.handlers) != 0:
-                try_index = None
-                return child, name, try_index
+# TODO multi except tuple eg.: 'except (Error1, Error2): ...'
+def get_try_slices(node: Node):
+    function_start = node.start_point[0] - 1
+    captures = QUERY_TRY_EXCEPT.captures(node)
+    if len(captures) == 0:
+        raise TryNotFoundException(
+            'try-except slices not found')
+    try_block_start, handlers = None, []
 
-    raise TryNotFoundException('Not found')
+    # remove try.stmt after handlers
+    filtered = [captures[0]]
+    filtered.extend([(capture, capture_name)
+                    for capture, capture_name in captures[1:] if capture_name != 'try.stmt'])
+
+    for capture, capture_name in filtered:
+        if capture_name == 'try.stmt':
+            try_block_start = capture.start_point[0] - function_start
+        elif capture_name == 'except.clause':
+            handlers.append((
+                capture.start_point[0] - function_start,
+                capture.end_point[0] - function_start
+            ))
+
+    return Slices(try_block_start, handlers)
 
 
-def count_lines(f: ast.FunctionDef, filename=None):
+def count_lines_of_function_body(f: Node, filename=None):
     try:
-        count = 0
-        for token_info in tokenize.generate_tokens(StringIO(astunparse.unparse(f)).readline):
-            if token_info.type == token.NEWLINE:
-                count += 1
-        return count
-    except tokenize.TokenError as e:
+        return f.end_point[0] - f.start_point[0]
+    except Exception as e:
         tqdm.write(f'Arquivo: {filename}' if filename is not None else '')
         tqdm.write(str(e))
-
     return 0
 
 
-def get_function_def(node: ast.Module):
-    for child in ast.walk(node):
-        if isinstance(child, ast.FunctionDef):
-            return child
-    raise FunctionDefNotFoundException('Not found')
+def get_function_def(node: Node) -> Node:
+    captures = QUERY_FUNCTION_DEF.captures(node)
+    if (len(captures) == 0):
+        raise FunctionDefNotFoundException('Not found')
+    return captures[0][0]
 
 
-def check_function_has_try(node: ast.FunctionDef):
-    for child in ast.walk(node):
-        if isinstance(child, ast.Try):
-            return True
-    return False
+def get_function_defs(tree: Tree) -> List[Node]:
+    captures = QUERY_FUNCTION_DEF.captures(tree.root_node)
+    return [c for c, _ in captures]
 
 
-def is_bad_exception_handling(node: ast.ExceptHandler):
-    return is_try_except_pass(node) or is_generic_except(node)
+def check_function_has_try(node: Node):
+    captures = QUERY_TRY_STMT.captures(node)
+    return len(captures) != 0
 
 
-def is_try_except_pass(node: ast.ExceptHandler):
-    return len(node.body) > 0 and isinstance(node.body[0], ast.Pass)
+def is_bad_exception_handling(node: Node):
+    captures = QUERY_EXCEPT_CLAUSE.captures(node)
+    except_clause = captures[0][0]
+    return except_clause.type != 'except_clause' or is_try_except_pass(except_clause) or is_generic_except(except_clause)
 
 
-def is_generic_except(node: ast.ExceptHandler):
-    if node.type is None:
+def is_try_except_pass(except_clause: Node):
+    if except_clause.type != 'except_clause':
+        raise ExceptClauseExpectedException('Parameter must be except_clause')
+
+    captures = QUERY_PASS_BLOCK.captures(except_clause)
+    return len(captures) > 0
+
+
+def is_generic_except(except_clause: Node):
+    if except_clause.type != 'except_clause':
+        raise ExceptClauseExpectedException('Parameter must be except_clause')
+
+    captures = QUERY_EXCEPT_EXPRESSION.captures(except_clause)
+    if len(captures) == 0:
         return True
-    if isinstance(node.type, ast.Name):
-        return node.type.id == 'Exception'
+
+    for c, _ in captures:
+        identifiers = QUERY_FIND_IDENTIFIERS.captures(c)
+        for ident, _ in identifiers:
+            if ident.text == b'Exception':
+                return True
+
     return False
 
 
-def count_try(node: ast.FunctionDef):
-    count = 0
-    for child in ast.walk(node):
-        if isinstance(child, ast.Try):
-            count += 1
-    return count
+def count_try(node: Node):
+    captures = QUERY_TRY_STMT.captures(node)
+    return len(captures)
 
 
-def count_except(node: ast.FunctionDef):
-    count = 0
-    for child in ast.walk(node):
-        if isinstance(child, ast.ExceptHandler):
-            count += 1
-    return count
+def count_except(node: Node):
+    captures = QUERY_EXCEPT_CLAUSE.captures(node)
+    return len(captures)
 
 
-def check_function_has_except_handler(node: ast.FunctionDef):
-    for child in ast.walk(node):
-        if isinstance(child, ast.ExceptHandler):
+def check_function_has_except_handler(node: Node):
+    captures = QUERY_EXCEPT_CLAUSE.captures(node)
+    return len(captures) != 0
+
+
+def statement_couter(node: Node):
+    captures = QUERY_EXPRESSION_STATEMENT.captures(node)
+    return len(captures)
+
+
+def check_function_has_nested_try(node: Node):
+    captures = QUERY_TRY_STMT.captures(node)
+    for c, _ in captures:
+        if len(QUERY_TRY_STMT.captures(c)) > 1:
             return True
-    return False
 
-
-def statement_couter(node: ast.FunctionDef):
-    counter = 0
-    for child in ast.walk(node):
-        if isinstance(child, ast.stmt):
-            counter += 1
-    return counter
-
-
-def check_function_has_nested_try(node: ast.AST, has_try_parent=False):
-    for child in ast.iter_child_nodes(node):
-        is_try = isinstance(child, ast.Try)
-        if is_try and has_try_parent:
-            return True
-        elif is_try:
-            has_nested = check_function_has_nested_try(child, True)
-            if has_nested:
-                return True
-        else:
-            has_try = check_function_has_nested_try(child, has_try_parent)
-            if has_try and has_try_parent:
-                return True
     return False
 
 
@@ -159,4 +175,4 @@ def decode_indent(line: str):
 
 
 def get_color_string(color: bcolors, string: str):
-    return f"{color}{string}{bcolors.ENDC}"
+    return colored(string, color.value)

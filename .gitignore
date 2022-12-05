@@ -3,12 +3,14 @@ __pycache__
 /target
 /projects
 /output
-
+/build
+/tree-sitter-python
 
 .idea
 *.iml
 .ipynb*
 *.log
 *env
+*.so
 
 except_file.py
