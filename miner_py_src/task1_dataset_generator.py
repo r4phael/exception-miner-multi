@@ -71,20 +71,25 @@ class TryDatasetGenerator():
         return pd.DataFrame(generated)
 
     def clear_line_buffer(self):
-        if len(self.token_buffer) != 0:
-            if self.try_reached:
-                indentation = (self.indentation_counter - 1) * INDENT_STR
-                self.stats.function_tokens_acc += self.indentation_counter - 1
-            else:
-                indentation = self.indentation_counter * INDENT_STR
-                self.stats.function_tokens_acc += self.indentation_counter
+        if len(self.token_buffer) == 0:
+            return
 
-            self.stats.function_tokens_acc += len(self.token_buffer)
-            self.stats.unique_tokens.update(self.token_buffer)
+        if self.try_reached:
+            indentation = (self.indentation_counter - 1) * INDENT_STR
+            self.stats.function_tokens_acc += self.indentation_counter - 1
+        else:
+            indentation = self.indentation_counter * INDENT_STR
+            self.stats.function_tokens_acc += self.indentation_counter
 
-            self.lines.append(indentation + " ".join(self.token_buffer))
-            self.labels.append(1 if self.try_reached else 0)
+        self.stats.function_tokens_acc += len(self.token_buffer)
+        self.stats.unique_tokens.update(self.token_buffer)
+
+        tokenized_line = indentation + " ".join(self.token_buffer)
         self.token_buffer = []
+
+        self.lines.append(tokenized_line)
+        self.labels.append(1 if self.try_reached else 0)
+       
 
     def end_of_generation(self):
         res = {

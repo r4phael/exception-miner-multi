@@ -1,6 +1,9 @@
 def test_string():
     try:
         print('teste')
+        print('teste')
+        print('teste')
+        print('teste')
         print("teste")
     except TypeError:
         raise ValueError(
@@ -9,6 +12,10 @@ def test_string():
 @op
 def my_retry_op():
     try:
+        result = print()
+        result = print()
+        result = print()
+        result = print()
         result = print()
     except TypeError:
         raise ValueError(

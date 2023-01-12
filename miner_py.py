@@ -5,6 +5,7 @@ from miner_py_src.miner_py_utils import (
     check_function_has_nested_try,
     check_function_has_try,
     count_lines,
+    is_bad_except_handling,
 )
 from miner_py_src.task2_dataset_generator import ExceptDatasetGenerator
 from miner_py_src.task1_dataset_generator import TryDatasetGenerator
@@ -20,6 +21,7 @@ from tqdm import tqdm
 from subprocess import call
 from pydriller import Git
 from random import sample, seed
+from miner_py_src.stats import FileStats
 
 seed(10)
 
@@ -166,6 +168,7 @@ def preprocess():
 
 
 def build_datasets(files):
+    filestats = FileStats()
     task1 = pd.DataFrame()
     task2 = pd.DataFrame()
 
@@ -185,12 +188,17 @@ def build_datasets(files):
             except UnicodeDecodeError as ex:
                 print(f"###### UnicodeDecodeError Error!!! file: {file}.\n{str(ex)}")
             else:
-                func_defs += [
-                    f
-                    for f in ast.walk(tree)
-                    if isinstance(f, ast.FunctionDef)
-                    and 7 < count_lines(f, file) <= 400
-                ]
+                for f in ast.walk(tree):
+                    if not isinstance(f, ast.FunctionDef):
+                        continue
+
+                    if 7 < count_lines(f, file) <= 100:
+                        func_defs.append(f)
+
+                    filestats.metrics(f, file)
+    filestats.num_files = len(files)
+    filestats.num_functions = len(func_defs)
+    print(filestats)
 
     func_defs_try_except = [
         f

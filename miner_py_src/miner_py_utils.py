@@ -65,11 +65,22 @@ def check_function_has_try(node: ast.FunctionDef):
             return True
     return False
 
+def is_bad_except_handling(node: ast.ExceptHandler):
+    return len(node.body) > 0 and isinstance(node.body[0], ast.Pass)
+
 
 def count_try(node: ast.FunctionDef):
     count = 0
     for child in ast.walk(node):
         if isinstance(child, ast.Try):
+            count += 1
+    return count
+
+
+def count_except(node: ast.FunctionDef):
+    count = 0
+    for child in ast.walk(node):
+        if isinstance(child, ast.ExceptHandler):
             count += 1
     return count
 
