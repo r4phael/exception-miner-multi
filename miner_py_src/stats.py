@@ -1,6 +1,8 @@
 from collections import Counter
-import ast
-from miner_py_src.miner_py_utils import count_except, statement_couter, is_bad_except_handling
+from miner_py_src.miner_py_utils import count_except, statement_couter, is_try_except_pass, is_generic_except
+from tqdm import tqdm
+from tree_sitter.binding import Node
+from miner_py_src.miner_py_utils import QUERY_TRY_STMT, QUERY_EXCEPT_CLAUSE
 
 
 class FileStats:
@@ -10,24 +12,34 @@ class FileStats:
     files_try_pass = set()
     func_try_except = set()
     func_try_pass = set()
+    func_generic_except = set()
 
-    def metrics(self, f: ast.FunctionDef, file: str):
-        for child in ast.walk(f):
-            if isinstance(child, ast.Try):
-                self.files_try_except.add(file)
-            elif isinstance(child, ast.ExceptHandler):
-                self.func_try_except.add(f"{file}:{f.name}")
-                if is_bad_except_handling(child):
-                    self.func_try_pass.add(f"{file}:{f.name}")
-                    self.files_try_pass.add(file)
+    def metrics(self, func_def: Node, file_path: str):
+        if len(QUERY_TRY_STMT.captures(func_def)) != 0:
+            self.files_try_except.add(file_path)
+
+        captures = QUERY_EXCEPT_CLAUSE.captures(func_def)
+
+        for except_clause, _ in captures:
+            self.func_try_except.add(f"{file_path}:{func_def.id}")
+            if is_try_except_pass(except_clause):
+                self.func_try_pass.add(f"{file_path}:{func_def.id}")
+                self.files_try_pass.add(file_path)
+            if is_generic_except(except_clause):
+                tqdm.write(f"{file_path}:{func_def.id}")
+                self.func_generic_except.add(f"{file_path}:{func_def.id}")
 
     def __str__(self) -> str:
         return (f"\n---------------- try-except STATS -----------------\n"
+                f"# try-except found:                   {len(self.func_try_except)}\n"
                 f"% try-except per file:                {(len(self.files_try_except) / self.num_files) * 100:.2f}%\n"
-                f"% try-except per function definition: {(len(self.func_try_except) / self.num_functions) * 100:.2f}%\n"
-                f"\n---------- (bad practice) try-pass STATS -----------\n"
+                f"% try-except per function definition: {(len(self.func_try_except) / max(self.num_functions, 1)) * 100:.2f}%\n"
+                f"\n--------------- bad practice STATS ----------------\n"
                 f"% try-pass per file:                  {(len(self.files_try_pass) / self.num_files) * 100:.2f}%\n"
-                f"% try-pass per function definition:   {(len(self.func_try_pass) / self.num_functions) * 100:.2f}%\n")
+                f"% try-pass per function definition:   {(len(self.func_try_pass) / max(self.num_functions, 1)) * 100:.2f}%\n"
+                f"# try-pass:                           {len(self.func_try_pass)}\n"
+                f"# generic exception handling:         {len(self.func_generic_except)}\n"
+                )
 
 
 class TBLDStats:
@@ -91,7 +103,7 @@ class CBGDStats:
         self.tokens_count_target += self.function_tokens_target_acc
         self.function_tokens_target_acc = 0
 
-    def increment_except_stats(self, function_def: ast.FunctionDef):
+    def increment_except_stats(self, function_def: Node):
         except_count = count_except(function_def)
         if except_count == 1:
             self.except_num_eq_1 += 1
@@ -101,7 +113,7 @@ class CBGDStats:
     def increment_function_counter(self):
         self.functions_count += 1
 
-    def increment_statements_counter(self, function_def: ast.FunctionDef):
+    def increment_statements_counter(self, function_def: Node):
         num_statements = statement_couter(function_def)
         self.statements_count += num_statements
         self.num_max_statement = max(self.num_max_statement, num_statements)

@@ -2,9 +2,11 @@ import csv
 import os
 import re
 import logging
+from tqdm.auto import trange
 
-## this is a hack to fool github servers in believing that this is not a robot
-SLEEP_TIME=60
+# this is a hack to fool github servers in believing that this is not a robot
+SLEEP_TIME = 60
+
 
 class CSVOutput:
     def __init__(self, file_name, header):
@@ -21,7 +23,8 @@ class CSVOutput:
     def write(self, entry):
         with open(self.__file_path, "a", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=self.__fields)
-            writer.writerow({k: v for k, v in entry.items() if k in self.__fields})
+            writer.writerow(
+                {k: v for k, v in entry.items() if k in self.__fields})
 
     def __verify(self, file_name, counter=1):
         if not os.path.exists(file_name):
@@ -29,12 +32,13 @@ class CSVOutput:
         file_name = re.sub("(-[0-9]+)?\.", "-{}.".format(counter), file_name)
         return self.__verify(file_name, counter=counter + 1)
 
+
 def create_logger(name, log_file):
     # Function setup as many loggers as you want
     formatter = logging.Formatter('[%(asctime)-15s] %(message)s')
-    logger    = logging.getLogger(name)
+    logger = logging.getLogger(name)
 
-    handler = logging.FileHandler(log_file,mode='a')
+    handler = logging.FileHandler(log_file, mode='a')
     handler.setFormatter(formatter)
 
     streamHandler = logging.StreamHandler()
@@ -45,3 +49,11 @@ def create_logger(name, log_file):
     logger.addHandler(streamHandler)
 
     return logger
+
+
+def batch(iterable, n=1):
+    l = len(iterable)
+    pbar = trange(0, l, n)
+    for ndx in pbar:
+        pbar.set_description(f"Global ... ")
+        yield iterable[ndx:min(ndx + n, l)]

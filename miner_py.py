@@ -1,27 +1,32 @@
-from utils import create_logger
-from miner_py_src.split_dataset import save_task1_pkl, save_task2_onmt
+import argparse
+import os
+import pathlib
+import shutil
+from random import sample, seed
+
+# from subprocess import call
+from subprocess import call
+from typing import List
+
+import pandas as pd
+from pydriller import Git
+from tqdm import tqdm
+from tree_sitter.binding import Node
+
 from miner_py_src.miner_py_utils import (
     check_function_has_except_handler,
     check_function_has_nested_try,
     check_function_has_try,
-    count_lines,
-    is_bad_except_handling,
+    count_lines_of_function_body,
+    get_function_defs,
+    is_bad_exception_handling,
 )
-from miner_py_src.task2_dataset_generator import ExceptDatasetGenerator
+from miner_py_src.split_dataset import merge_task1_pkl, save_task1_pkl, save_task2_onmt
+from miner_py_src.stats import CBGDStats, FileStats, TBLDStats
 from miner_py_src.task1_dataset_generator import TryDatasetGenerator
-import argparse
-import pandas as pd
-import pathlib
-import os
-import shutil
-import ast
-from tqdm import tqdm
-
-# from subprocess import call
-from subprocess import call
-from pydriller import Git
-from random import sample, seed
-from miner_py_src.stats import FileStats
+from miner_py_src.task2_dataset_generator import ExceptDatasetGenerator
+from miner_py_src.tree_sitter_lang import parser as tree_sitter_parser
+from utils import batch, create_logger
 
 seed(10)
 
@@ -64,38 +69,28 @@ def fetch_repositories():
             os.mkdir("output/py/results/{}".format(project))
 
         files = [
-            f for f in gr.files() if pathlib.Path(r"{0}".format(f)).suffix == ".py"
+            f
+            for f in gr.files()
+            if pathlib.Path(r"{0}".format(f)).suffix == ".py" and not os.path.islink(f)
         ]
         for file in tqdm(files):
-
             print("File: {}".format(file))
-            # print(os.path.basename(file))
-            # shutil.copy(file, "except_file.py")
-            # output_path = os.path.join(
-            #     "output/py/files/{}".format(project), os.path.basename(file)
-            # )
             try:
                 with open(file, "rb") as f:
                     content = f.read()
-                    tree = ast.parse(content)
-                    # print(tree)
-                for node in ast.walk(tree):
-                    if isinstance(node, ast.ExceptHandler):
-                        print(
-                            "###### File {0} in project {1} have exception: {2}.#######".format(
-                                file, project, str(node)
-                            )
-                        )
-                        f.close()
-                        shutil.move(
-                            file,
-                            "output/py/results/{}/{}".format(
-                                project, os.path.basename(file)
-                            ),
-                        )
+                    tree = tree_sitter_parser.parse(content)
 
-                        files_with_try.append(file)
-
+                if check_function_has_except_handler(tree.root_node):
+                    print(
+                        f"###### File {file} in project {project} have exception.#######"
+                    )
+                    shutil.move(
+                        file,
+                        "output/py/results/{}/{}".format(
+                            project, os.path.basename(file)
+                        ),
+                    )
+                    files_with_try.append(file)
             except Exception as e:
                 print(
                     f"###### Error!!! in project {project} and file: {file}. exception: {str(e)} ##########"
@@ -128,17 +123,10 @@ def write_files(files, project):
             "tests.py",
             "runtests.py",
         ]:
-            try:
-                with open(file, "rb") as f:
-                    shutil.move(
-                        file,
-                        "output/py/results/{}/{}".format(
-                            project, os.path.basename(file)
-                        ),
-                    )
-            except FileNotFoundError as e:
-                print(
-                    f"###### Error!!! to locate file in {project} and file: {file}. exception: {str(e)} ##########"
+            with open(file, "rb") as f:
+                shutil.move(
+                    file,
+                    "output/py/results/{}/{}".format(project, os.path.basename(file)),
                 )
 
 
@@ -158,47 +146,61 @@ def save_datasets(task1: pd.DataFrame, task2: pd.DataFrame):
 
 
 def preprocess():
+    file_stats = FileStats()
+    tbld_stats = TBLDStats()
+    cgbd_stats = CBGDStats()
+
     files = get_files()
 
-    task1, task2 = build_datasets(files)
+    files_counter = 0
+    for batch_files in batch(files, 10000):
+        task1, task2 = build_datasets(batch_files, file_stats, tbld_stats, cgbd_stats)
 
-    # print(task1)
-    # print(task2)
-    save_datasets(task1, task2)
+        save_datasets(task1, task2)
+
+        files_counter += len(batch_files)
+
+    print(file_stats)
+    print(tbld_stats)
+    print(cgbd_stats)
+
+    merge_task1_pkl()
 
 
-def build_datasets(files):
-    filestats = FileStats()
-    task1 = pd.DataFrame()
-    task2 = pd.DataFrame()
+def build_datasets(
+    files: list, file_stats: FileStats, tbld_stats: TBLDStats, cgbd_stats: CBGDStats
+):
+
+    task1 = []
+    task2 = []
 
     pbar = tqdm(files)
+    func_defs: List[Node] = []
+    for file_path in pbar:
+        pbar.set_description(f"Processing {str(file_path)[-40:].ljust(40)}")
 
-    func_defs = []
-    for file in pbar:
-        pbar.set_description(f"Processing {str(file)[-40:].ljust(40)}")
-        # 1.selecionar arquivos python que contém um try-except
-        # 2.pecorrer a AST e verificar quais métodos possuem try-except
-        with open(file, "r") as f:
+        with open(file_path, "rb") as file:
             try:
-                content = f.read()
-                tree = ast.parse(content)
-            except SyntaxError as ex:
-                print(f"###### SyntaxError Error!!! file: {file}.\n{str(ex)}")
+                content = file.read()
             except UnicodeDecodeError as ex:
-                print(f"###### UnicodeDecodeError Error!!! file: {file}.\n{str(ex)}")
-            else:
-                for f in ast.walk(tree):
-                    if not isinstance(f, ast.FunctionDef):
-                        continue
+                tqdm.write(
+                    f"###### UnicodeDecodeError Error!!! file: {file_path}.\n{str(ex)}"
+                )
+                continue
+        try:
+            tree = tree_sitter_parser.parse(content)
+        except SyntaxError as ex:
+            tqdm.write(f"###### SyntaxError Error!!! file: {file_path}.\n{str(ex)}")
+        else:
+            captures = get_function_defs(tree)
+            for child in captures:
+                if 7 < count_lines_of_function_body(child, file_path) <= 100:
+                    func_defs.append(child)
 
-                    if 7 < count_lines(f, file) <= 100:
-                        func_defs.append(f)
+                file_stats.metrics(child, file_path)
 
-                    filestats.metrics(f, file)
-    filestats.num_files = len(files)
-    filestats.num_functions = len(func_defs)
-    print(filestats)
+    file_stats.num_files += len(files)
+    file_stats.num_functions += len(func_defs)
 
     func_defs_try_except = [
         f
@@ -212,19 +214,16 @@ def build_datasets(files):
     except ValueError:
         func_defs_no_try = negative_samples
 
-    # 3. Dataset1 ->
-    # 	3.1 para cada método, tokeniza os statements do método;
-    # 	3.2 se o statement estiver dentro de um try, coloca 1, caso contrário 0;
-    dg1 = TryDatasetGenerator(func_defs_try_except + func_defs_no_try)
-    task1 = dg1.generate()
+    dg1 = TryDatasetGenerator(func_defs_try_except + func_defs_no_try, tbld_stats)
+    task1.append(dg1.generate())
 
-    # 4. Dataset 2->
-    # 	4.1 para cada método, extrair or par {código do método, except):
-    # 		4.1.1 o código do método com o try sem o except;
-    # 		4.1.2 o código do except.
-    dg2 = ExceptDatasetGenerator(func_defs_try_except)
-    task2 = pd.DataFrame(dg2.generate())
-    return task1, task2
+    func_defs_filter_bad_exception = [
+        f for f in func_defs_try_except if not is_bad_exception_handling(f)
+    ]
+    dg2 = ExceptDatasetGenerator(func_defs_filter_bad_exception, cgbd_stats)
+    task2.append(pd.DataFrame(dg2.generate()))
+
+    return pd.concat(task1), pd.concat(task2)
 
 
 if __name__ == "__main__":

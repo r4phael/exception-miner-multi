@@ -10,6 +10,7 @@ def divide_except(x, y):
         except ZeroDivisionError:
             print("Sorry ! You are dividing by zero ")
 
+
 def divide_except_multi(x, y):
     a = x
     b = y
@@ -24,6 +25,20 @@ def divide_except_multi(x, y):
         print("ChildProcessError ")
 
     return 0
+
+
+def multi_except():
+    print('')
+    print('')
+    print('')
+    print('')
+    print('')
+    print('')
+
+    try:
+        print('raise exception')
+    except (ValueError, FileNotFoundError):
+        print('except')
 
 
 def divide_else(x, y):
