@@ -1,5 +1,10 @@
 from collections import Counter
-from miner_py_src.miner_py_utils import count_except, statement_couter, is_try_except_pass, is_generic_except
+from miner_py_src.miner_py_utils import (
+    count_except,
+    statement_couter,
+    is_try_except_pass,
+    is_generic_except,
+)
 from tqdm import tqdm
 from tree_sitter.binding import Node
 from miner_py_src.miner_py_utils import QUERY_TRY_STMT, QUERY_EXCEPT_CLAUSE
@@ -10,36 +15,66 @@ class FileStats:
     num_functions = 0
     files_try_except = set()
     files_try_pass = set()
+    files_generic_except = set()
     func_try_except = set()
     func_try_pass = set()
     func_generic_except = set()
+    func_has_except_handler = set()
+    func_has_nested_try = set()
 
     def metrics(self, func_def: Node, file_path: str):
         if len(QUERY_TRY_STMT.captures(func_def)) != 0:
             self.files_try_except.add(file_path)
 
-        captures = QUERY_EXCEPT_CLAUSE.captures(func_def)
+        captures_except = QUERY_EXCEPT_CLAUSE.captures(func_def)
 
-        for except_clause, _ in captures:
+        for except_clause, _ in captures_except:
             self.func_try_except.add(f"{file_path}:{func_def.id}")
             if is_try_except_pass(except_clause):
                 self.func_try_pass.add(f"{file_path}:{func_def.id}")
                 self.files_try_pass.add(file_path)
             if is_generic_except(except_clause):
                 tqdm.write(f"{file_path}:{func_def.id}")
+                self.files_generic_except.add(file_path)
                 self.func_generic_except.add(f"{file_path}:{func_def.id}")
 
     def __str__(self) -> str:
-        return (f"\n---------------- try-except STATS -----------------\n"
-                f"# try-except found:                   {len(self.func_try_except)}\n"
-                f"% try-except per file:                {(len(self.files_try_except) / self.num_files) * 100:.2f}%\n"
-                f"% try-except per function definition: {(len(self.func_try_except) / max(self.num_functions, 1)) * 100:.2f}%\n"
-                f"\n--------------- bad practice STATS ----------------\n"
-                f"% try-pass per file:                  {(len(self.files_try_pass) / self.num_files) * 100:.2f}%\n"
-                f"% try-pass per function definition:   {(len(self.func_try_pass) / max(self.num_functions, 1)) * 100:.2f}%\n"
-                f"# try-pass:                           {len(self.func_try_pass)}\n"
-                f"# generic exception handling:         {len(self.func_generic_except)}\n"
-                )
+        return (
+            f"\n---------------- try-except STATS -----------------\n"
+            f"# try-except found:                   {len(self.func_try_except)}\n"
+            f"% try-except per file:                {(len(self.files_try_except) / self.num_files) * 100:.2f}%\n"
+            f"% try-except per function definition: {(len(self.func_try_except) / max(self.num_functions, 1)) * 100:.2f}%\n"
+            f"\n--------------- bad practice STATS ----------------\n"
+            f"# try-pass:                           {len(self.func_try_pass)}\n"
+            f"% try-pass per file:                  {(len(self.files_try_pass) / self.num_files) * 100:.2f}%\n"
+            f"% try-pass per function definition:   {(len(self.func_try_pass) / max(self.num_functions, 1)) * 100:.2f}%\n"
+            f"# generic exception handling:         {len(self.func_generic_except)}\n"
+            f"# generic exception per file:         {(len(self.files_generic_except) / self.num_files) * 100:.2f}%\n"
+            f"# generic exception per function definition: {(len(self.func_generic_except) / max(self.num_functions, 1)) * 100:.2f}%\n"
+        )
+
+    def get_metrics(self, func_def: Node):
+        """
+        Return a list of exception handling metrics in the following order: try-except clauses,
+            try-pass, generic-except
+        """
+        n_try_except, n_try_pass, n_generic_except = 0, 0, 0
+
+        captures_except = QUERY_EXCEPT_CLAUSE.captures(func_def)
+
+        for except_clause, _ in captures_except:
+            n_try_except += 1
+            if is_try_except_pass(except_clause):
+                n_try_pass += 1
+            if is_generic_except(except_clause):
+                # tqdm.write(f"{file_path}:{func_def.id}")
+                n_generic_except += 1
+
+        return [
+            n_try_except,
+            n_try_pass,
+            n_generic_except,
+        ]
 
 
 class TBLDStats:
@@ -60,19 +95,25 @@ class TBLDStats:
             self.try_num_lt_eq_2 += 1
 
     def __str__(self) -> str:
-        stats_str = ('-------- TBLD STATS --------\n'
-                     f'#Python methods   {self.functions_count}\n'
-                     f'#TryNum=1         {self.try_num_eq_1}\n'
-                     f'#TryNum≥2         {self.try_num_lt_eq_2}\n'
-                     f'#MaxTokens        {self.num_max_tokens}\n'
-                     f'#AverageTokens    {self.tokens_count / self.functions_count if self.functions_count != 0 else 0:.2f}\n'
-                     f'#MaxStatements    {self.num_max_statement}\n'
-                     f'#AverageStatement {(self.statements_count / self.functions_count) if self.functions_count != 0 else 0:.2f}\n'
-                     f'#UniqueTokens     {len(self.unique_tokens)}\n'
-                     '-------- Top 10 Unique Tokens Ranking --------\n')
+        stats_str = (
+            "-------- TBLD STATS --------\n"
+            f"#Python methods   {self.functions_count}\n"
+            f"#TryNum=1         {self.try_num_eq_1}\n"
+            f"#TryNum≥2         {self.try_num_lt_eq_2}\n"
+            f"#MaxTokens        {self.num_max_tokens}\n"
+            f"#AverageTokens    {self.tokens_count / self.functions_count if self.functions_count != 0 else 0:.2f}\n"
+            f"#MaxStatements    {self.num_max_statement}\n"
+            f"#AverageStatement {(self.statements_count / self.functions_count) if self.functions_count != 0 else 0:.2f}\n"
+            f"#UniqueTokens     {len(self.unique_tokens)}\n"
+            "-------- Top 10 Unique Tokens Ranking --------\n"
+        )
 
-        unique_ranking_str = ''.join(
-            [f"{key} - {value}" + "\n" for key, value in self.unique_tokens.most_common()[:10]])
+        unique_ranking_str = "".join(
+            [
+                f"{key} - {value}" + "\n"
+                for key, value in self.unique_tokens.most_common()[:10]
+            ]
+        )
         return stats_str + unique_ranking_str
 
 
@@ -94,12 +135,14 @@ class CBGDStats:
 
     def reset(self):
         self.num_max_tokens_source = max(
-            self.num_max_tokens_source, self.function_tokens_source_acc)
+            self.num_max_tokens_source, self.function_tokens_source_acc
+        )
         self.tokens_count_source += self.function_tokens_source_acc
         self.function_tokens_source_acc = 0
 
         self.num_max_tokens_target = max(
-            self.num_max_tokens_target, self.function_tokens_target_acc)
+            self.num_max_tokens_target, self.function_tokens_target_acc
+        )
         self.tokens_count_target += self.function_tokens_target_acc
         self.function_tokens_target_acc = 0
 
@@ -130,17 +173,23 @@ class CBGDStats:
         self.current_num_tokens = 0
 
     def __str__(self) -> str:
-        stats_str = ('-------- CBGD STATS --------\n'
-                     f'#Try-catch pairs         {self.functions_count}\n'
-                     f'#ExceptNum=1             {self.except_num_eq_1}\n'
-                     f'#ExceptNum≥2             {self.except_num_lt_eq_2}\n'
-                     f'#MaxTokens of Source     {self.num_max_tokens_source}\n'
-                     f'#AverageTokens of Source {self.tokens_count_source / self.functions_count if self.functions_count != 0 else 0:.2f}\n'
-                     f'#MaxTokens of Target     {self.num_max_tokens_target}\n'
-                     f'#AverageTokens of Target {self.tokens_count_target / self.functions_count if self.functions_count != 0 else 0:.2f}\n'
-                     f'#UniqueTokens            {len(self.unique_tokens)}\n'
-                     '-------- Top 10 Unique Tokens Ranking --------\n')
+        stats_str = (
+            "-------- CBGD STATS --------\n"
+            f"#Try-catch pairs         {self.functions_count}\n"
+            f"#ExceptNum=1             {self.except_num_eq_1}\n"
+            f"#ExceptNum≥2             {self.except_num_lt_eq_2}\n"
+            f"#MaxTokens of Source     {self.num_max_tokens_source}\n"
+            f"#AverageTokens of Source {self.tokens_count_source / self.functions_count if self.functions_count != 0 else 0:.2f}\n"
+            f"#MaxTokens of Target     {self.num_max_tokens_target}\n"
+            f"#AverageTokens of Target {self.tokens_count_target / self.functions_count if self.functions_count != 0 else 0:.2f}\n"
+            f"#UniqueTokens            {len(self.unique_tokens)}\n"
+            "-------- Top 10 Unique Tokens Ranking --------\n"
+        )
 
-        unique_ranking_str = ''.join(
-            [f"{key} - {value}" + "\n" for key, value in self.unique_tokens.most_common()[:10]])
+        unique_ranking_str = "".join(
+            [
+                f"{key} - {value}" + "\n"
+                for key, value in self.unique_tokens.most_common()[:10]
+            ]
+        )
         return stats_str + unique_ranking_str
