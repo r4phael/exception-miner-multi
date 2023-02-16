@@ -14,7 +14,7 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 logger.setLevel(logging.DEBUG)
 
-GITHUB_TOKEN = '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'
+GITHUB_TOKEN = 'YOUR_TOKEN'
 GITHUB_AUTH_HEADER = {
     'authorization': "token {0}".format(GITHUB_TOKEN),  # Add Github token
 }

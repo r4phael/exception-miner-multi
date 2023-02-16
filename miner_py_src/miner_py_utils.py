@@ -17,6 +17,7 @@ from miner_py_src.tree_sitter_lang import (
     QUERY_PASS_BLOCK,
     QUERY_TRY_EXCEPT,
     QUERY_TRY_STMT,
+    QUERY_FUNCTION_LITERAL
 )
 
 from .exceptions import (
@@ -93,6 +94,12 @@ def get_function_defs(tree: Tree) -> List[Node]:
     captures = QUERY_FUNCTION_DEF.captures(tree.root_node)
     return [c for c, _ in captures]
 
+def get_function_literal(node: Node):
+    captures =  QUERY_FUNCTION_LITERAL.captures(node)
+    if len(captures) == 0:
+        raise FunctionDefNotFoundException("Not found")
+    return captures[0][0]
+
 
 def check_function_has_try(node: Node):
     captures = QUERY_TRY_STMT.captures(node)
@@ -142,7 +149,6 @@ def count_try(node: Node):
 def count_except(node: Node):
     captures = QUERY_EXCEPT_CLAUSE.captures(node)
     return len(captures)
-
 
 def check_function_has_except_handler(node: Node):
     captures = QUERY_EXCEPT_CLAUSE.captures(node)

@@ -18,3 +18,5 @@ tree-sitter==0.20.1
 types-pytz==2022.4.0.0
 typing_extensions==4.4.0
 termcolor==2.2.0
+sqlalchemy==1.4.45
+psycopg2==2.9.5

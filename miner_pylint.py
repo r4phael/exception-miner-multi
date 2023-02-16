@@ -22,6 +22,7 @@ from miner_py_src.miner_py_utils import (
     get_function_def,
     is_try_except_pass,
     is_bad_exception_handling,
+    get_function_literal
 )
 
 logger = create_logger("exception_miner", "exception_miner.log")
@@ -99,6 +100,10 @@ def collect_smells(files, project):
                     )
                 )
 
+def __get_method_name(node) -> str:
+    for child in node.children:
+        if child.type == 'identifier':
+            return child.text.decode("utf-8")
 
 def collect_stats(files, project):
 
@@ -108,7 +113,7 @@ def collect_stats(files, project):
 
     file_stats = FileStats()
     pbar = tqdm(files)
-    func_defs: List[Node] = []
+    func_defs: List[str] = [] #List[Node] = []
     for file_path in pbar:
         print(f"File: {file_path}")
         pbar.set_description(f"Processing {str(file_path)[-40:].ljust(40)}")
@@ -128,13 +133,14 @@ def collect_stats(files, project):
         else:
             captures = get_function_defs(tree)
             for child in captures:
-                func_defs.append(get_function_def(child))
+                #print("Function: ", __get_method_name(child))
+                func_defs.append(__get_method_name(child))
                 file_stats.metrics(child, file_path)
                 metrics = file_stats.get_metrics(child)
                 df = pd.concat(
                     [
                         pd.DataFrame(
-                            [[file_path, child, metrics[0], metrics[1], metrics[2]]],
+                            [[file_path, __get_method_name(child), metrics[0], metrics[1], metrics[2]]],
                             columns=df.columns,
                         ),
                         df,
@@ -151,11 +157,13 @@ def collect_stats(files, project):
     # func_defs_try_pass = [f for f in func_defs if is_try_except_pass(f)]
 
     print(file_stats)
-    df.to_csv(f"output/stats.csv", index=False)
+    df.to_csv(f"output/parser/{project}_stats.csv", index=False)
 
 
 if __name__ == "__main__":
-    project = "django"
-    files = fetch_repositories(project)
-    # collect_smells(files, project)
-    collect_stats(files, project)
+    projects = ["pandas"]#["django", "flask", "pytorch", "pandas"]
+    for project in projects:
+        files = fetch_repositories(project)
+        print(files)
+        # collect_smells(files, project)
+        #collect_stats(files, project)

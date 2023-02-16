@@ -21,6 +21,9 @@ parser.set_language(PY_LANGUAGE)
 QUERY_FUNCTION_DEF: Query = PY_LANGUAGE.query(
     "(function_definition) @function.def")
 
+QUERY_FUNCTION_LITERAL: Query = PY_LANGUAGE.query(
+    """(function_definition (identifier) @function.def)""")
+
 QUERY_EXPRESSION_STATEMENT: Query = PY_LANGUAGE.query(
     """(expression_statement) @expression.stmt""")
 
