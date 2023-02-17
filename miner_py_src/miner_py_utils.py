@@ -181,7 +181,7 @@ def check_function_has_nested_try(node: Node):
 
 def get_bare_raise(node: Node):
     return list(filter(
-            lambda x: len(QUERY_RAISE_STATEMENT_IDENTIFIER.captures(x[0])) == 0,
+            lambda x: x[0].text == b'raise',
             QUERY_RAISE_STATEMENT.captures(node)))
 
 def count_broad_exception_raised(node: Node):

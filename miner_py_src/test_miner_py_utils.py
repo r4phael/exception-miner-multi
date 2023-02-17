@@ -324,7 +324,9 @@ def validate_positive(x):
     def test_count_misplaced_bare_raise_when_not_bare_raise(self):
         code = b'''
 def validate_positive(x):
-    raise RedirectCycleError("message")'''
+    raise RedirectCycleError("message")
+    if cls.server_thread.error:
+        raise cls.server_thread.error'''
 
         captures = QUERY_FUNCTION_DEF.captures(parser.parse(code).root_node)
         func_def, _ = captures[0]
