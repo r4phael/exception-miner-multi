@@ -24,7 +24,7 @@ from miner_py_src.tree_sitter_lang import (
     QUERY_EXPRESSION_STATEMENT,
     QUERY_TRY_STMT,
     QUERY_TRY_STMT,
-    QUERY_BROAD_EXCEPTION_RAISED,
+    QUERY_RAISE_STATEMENT_IDENTIFIER,
     QUERY_TRY_EXCEPT_RAISE,
     QUERY_RAISE_STATEMENT,
 )
@@ -179,12 +179,16 @@ def check_function_has_nested_try(node: Node):
 
     return False
 
+def get_bare_raise(node: Node):
+    return list(filter(
+            lambda x: len(QUERY_RAISE_STATEMENT_IDENTIFIER.captures(x[0])) == 0,
+            QUERY_RAISE_STATEMENT.captures(node)))
 
 def count_broad_exception_raised(node: Node):
     return len(
         list(filter(
             lambda x: x[0].text == b'Exception',
-            QUERY_BROAD_EXCEPTION_RAISED.captures(node))))
+            QUERY_RAISE_STATEMENT_IDENTIFIER.captures(node))))
 
 
 def count_try_except_raise(node: Node):
@@ -196,9 +200,9 @@ def count_try_except_raise(node: Node):
 
 
 def count_misplaced_bare_raise(node: Node):
-    raise_statements = QUERY_RAISE_STATEMENT.captures(node)
+    bare_raise_statements = get_bare_raise(node)
     counter = 0
-    for node, _ in raise_statements:
+    for node, _ in bare_raise_statements:
         if (has_misplaced_bare_raise(node)):
             counter += 1
     return counter

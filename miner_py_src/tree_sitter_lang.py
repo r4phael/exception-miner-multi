@@ -50,7 +50,7 @@ QUERY_FIND_IDENTIFIERS: Query = PY_LANGUAGE.query(
 QUERY_RAISE_STATEMENT: Query = PY_LANGUAGE.query(
     """(raise_statement) @raise.stmt""")
 
-QUERY_BROAD_EXCEPTION_RAISED: Query = PY_LANGUAGE.query(
+QUERY_RAISE_STATEMENT_IDENTIFIER: Query = PY_LANGUAGE.query(
     """(raise_statement [
                 (identifier) @raise.identifier 
                 (call function: (identifier) @raise.identifier)
