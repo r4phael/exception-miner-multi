@@ -180,14 +180,17 @@ def check_function_has_nested_try(node: Node):
     return False
 
 
-def count_broad_raise(node: Node):
-    return len(QUERY_BROAD_EXCEPTION_RAISED.captures(node))
+def count_broad_exception_raised(node: Node):
+    return len(
+        list(filter(
+            lambda x: x[0].text == b'Exception',
+            QUERY_BROAD_EXCEPTION_RAISED.captures(node))))
 
 
 def count_try_except_raise(node: Node):
     return len(
         list(filter(
-            lambda x: (x[1] == 'raise.identifier' and x[0].text == b'Except') or
+            lambda x: (x[1] == 'raise.identifier' and x[0].text == b'Exception') or
             (x[1] == 'raise.stmt' and x[0].text == b'raise'),
             QUERY_TRY_EXCEPT_RAISE.captures(node))))
 

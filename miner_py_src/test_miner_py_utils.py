@@ -3,7 +3,8 @@ import unittest
 from miner_py_src.miner_py_utils import (Slices,
                                          check_function_has_except_handler,
                                          check_function_has_nested_try,
-                                         count_lines_of_function_body, get_try_slices, count_misplaced_bare_raise)
+                                         count_lines_of_function_body, get_try_slices, 
+                                         count_misplaced_bare_raise, count_broad_exception_raised, count_try_except_raise)
 from miner_py_src.tree_sitter_lang import QUERY_FUNCTION_DEF, parser
 
 
@@ -316,6 +317,68 @@ def validate_positive(x):
         func_def, _ = captures[0]
 
         actual = count_misplaced_bare_raise(func_def)
+        expected = 1
+
+        self.assertEqual(actual, expected)
+
+    def test_count_broad_exception_raised_OK(self):
+        code = b'''
+def test_count_broad_exception_raised():
+    if condition1:
+        raise RedirectCycleError("message")'''
+
+        captures = QUERY_FUNCTION_DEF.captures(parser.parse(code).root_node)
+        func_def, _ = captures[0]
+
+        actual = count_broad_exception_raised(func_def)
+        expected = 0
+
+        self.assertEqual(actual, expected)
+
+    def test_count_broad_exception_raised_found(self):
+        code = b'''
+def test_count_broad_exception_raised():
+    if condition1:
+        raise Exception("message")  # [broad-exception-raised]
+    if len(apple) < length:
+        raise Exception("Apple is too small!")  # [broad-exception-raised]'''
+
+        captures = QUERY_FUNCTION_DEF.captures(parser.parse(code).root_node)
+        func_def, _ = captures[0]
+
+        actual = count_broad_exception_raised(func_def)
+        expected = 2
+
+        self.assertEqual(actual, expected)
+
+    def test_count_try_except_raise_OK(self):
+        code = b'''
+def test_count_try_except_raise():
+    try:
+        1 / 0
+    except ZeroDivisionError as e:
+        raise ValueError("The area of the rectangle cannot be zero") from e'''
+
+        captures = QUERY_FUNCTION_DEF.captures(parser.parse(code).root_node)
+        func_def, _ = captures[0]
+
+        actual = count_try_except_raise(func_def)
+        expected = 0
+
+        self.assertEqual(actual, expected)
+
+    def test_count_try_except_raise_found(self):
+        code = b'''
+def test_count_try_except_raise():
+    try:
+        1 / 0
+    except ZeroDivisionError as e:  # [try-except-raise]
+        raise'''
+
+        captures = QUERY_FUNCTION_DEF.captures(parser.parse(code).root_node)
+        func_def, _ = captures[0]
+
+        actual = count_try_except_raise(func_def)
         expected = 1
 
         self.assertEqual(actual, expected)

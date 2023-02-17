@@ -51,7 +51,10 @@ QUERY_RAISE_STATEMENT: Query = PY_LANGUAGE.query(
     """(raise_statement) @raise.stmt""")
 
 QUERY_BROAD_EXCEPTION_RAISED: Query = PY_LANGUAGE.query(
-    """(raise_statement (call (identifier) @raise.type))""")
+    """(raise_statement [
+                (identifier) @raise.identifier 
+                (call function: (identifier) @raise.identifier)
+            ]*)""")
 
 QUERY_TRY_EXCEPT_RAISE: Query = PY_LANGUAGE.query(
     """(except_clause (block 

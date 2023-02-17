@@ -4,7 +4,7 @@ from miner_py_src.miner_py_utils import (
     statement_couter,
     is_try_except_pass,
     is_generic_except,
-    count_broad_raise,
+    count_broad_exception_raised,
     count_try_except_raise,
     count_misplaced_bare_raise
 )
@@ -65,7 +65,7 @@ class FileStats:
 
         captures_except = QUERY_EXCEPT_CLAUSE.captures(func_def)
 
-        n_captures_broad_raise = count_broad_raise(func_def)
+        n_captures_broad_raise = count_broad_exception_raised(func_def)
 
         n_captures_try_except_raise = count_try_except_raise(func_def)
 
