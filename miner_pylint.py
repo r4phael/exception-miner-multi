@@ -109,7 +109,7 @@ def collect_stats(files, project):
 
     df = pd.DataFrame(
         columns=["file", "function", "n_try_except", "n_try_pass", 
-                 "n_generic_except", "n_captures_broad_raise", "n_captures_try_except_raise", "n_captures_try_except_raise"]
+                 "n_generic_except", "n_captures_broad_raise", "n_captures_try_except_raise", "n_captures_misplaced_bare_raise"]
     )
 
     file_stats = FileStats()
