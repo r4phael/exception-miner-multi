@@ -47,16 +47,12 @@ QUERY_PASS_BLOCK: Query = PY_LANGUAGE.query(
 QUERY_FIND_IDENTIFIERS: Query = PY_LANGUAGE.query(
     """(identifier) @identifier""")
 
+QUERY_BROAD_EXCEPTION_RAISED: Query = PY_LANGUAGE.query(
+    """(raise_statement (call (identifier) @raise.type))""")
 
-tree = parser.parse(bytes("""
-try:
-    print('teste')
-except Exception:
-    pass
-""", "utf8"))
-
-root_node = tree.root_node
-captures = QUERY_EXCEPT_EXPRESSION.captures(tree.root_node)
-cap = captures[0][0]
-if cap.is_named:
-    print(captures[0][0].text == b'Exception')  # type: ignore
+QUERY_TRY_EXCEPT_RAISE: Query = PY_LANGUAGE.query(
+    """(except_clause (block 
+            (raise_statement [
+                (identifier) @raise.identifier 
+                (call function: (identifier) @raise.identifier)
+            ]*) @raise.stmt))""")
