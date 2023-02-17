@@ -3,7 +3,7 @@ import unittest
 from miner_py_src.miner_py_utils import (Slices,
                                          check_function_has_except_handler,
                                          check_function_has_nested_try,
-                                         count_lines_of_function_body, get_try_slices)
+                                         count_lines_of_function_body, get_try_slices, count_misplaced_bare_raise)
 from miner_py_src.tree_sitter_lang import QUERY_FUNCTION_DEF, parser
 
 
@@ -233,6 +233,90 @@ def teste_nested_try_except():
         actual = get_try_slices(func_def)
         expected = Slices(try_block_start=3, handlers=[
                           (6, 7), (8, 10), (11, 12)])
+
+        self.assertEqual(actual, expected)
+
+    def test_count_misplaced_bare_raise_try_stmt(self):
+        code = b'''
+def misplaced_bare_raise_try_stmt():
+    try:
+        raise  # [misplaced-bare-raise]
+    except:
+        pass'''
+
+        captures = QUERY_FUNCTION_DEF.captures(parser.parse(code).root_node)
+        func_def, _ = captures[0]
+
+        actual = count_misplaced_bare_raise(func_def)
+        expected = 1
+
+        self.assertEqual(actual, expected)
+
+    def test_count_misplaced_bare_raise_except_stmt(self):
+        code = b'''
+def foo():
+    try:
+        print()
+    except:
+        raise # OK'''
+
+        captures = QUERY_FUNCTION_DEF.captures(parser.parse(code).root_node)
+        func_def, _ = captures[0]
+
+        actual = count_misplaced_bare_raise(func_def)
+        expected = 0
+
+        self.assertEqual(actual, expected)
+
+    def test_count_misplaced_bare_raise_else(self):
+        code = b'''
+def foo():
+    try:
+        print()
+    except:
+        print()
+    else:
+        raise # [misplaced-bare-raise]'''
+
+        captures = QUERY_FUNCTION_DEF.captures(parser.parse(code).root_node)
+        func_def, _ = captures[0]
+
+        actual = count_misplaced_bare_raise(func_def)
+        expected = 1
+
+        self.assertEqual(actual, expected)
+
+    def test_count_misplaced_bare_raise_finally(self):
+        code = b'''
+def foo():
+    try:
+        print()
+    except:
+        print()
+    else:
+        print()
+    finally:
+        raise # [misplaced-bare-raise]'''
+
+        captures = QUERY_FUNCTION_DEF.captures(parser.parse(code).root_node)
+        func_def, _ = captures[0]
+
+        actual = count_misplaced_bare_raise(func_def)
+        expected = 1
+
+        self.assertEqual(actual, expected)
+
+    def test_count_misplaced_bare_raise_root(self):
+        code = b'''
+def validate_positive(x):
+    if x <= 0:
+        raise  # [misplaced-bare-raise]'''
+
+        captures = QUERY_FUNCTION_DEF.captures(parser.parse(code).root_node)
+        func_def, _ = captures[0]
+
+        actual = count_misplaced_bare_raise(func_def)
+        expected = 1
 
         self.assertEqual(actual, expected)
 

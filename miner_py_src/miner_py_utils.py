@@ -8,7 +8,26 @@ from termcolor import colored
 from tqdm import tqdm
 from tree_sitter.binding import Node, Tree
 
-from miner_py_src.tree_sitter_lang import *
+from miner_py_src.tree_sitter_lang import (
+    QUERY_TRY_EXCEPT,
+    QUERY_FUNCTION_DEF,
+    QUERY_FUNCTION_DEF,
+    QUERY_FUNCTION_LITERAL,
+    QUERY_TRY_STMT,
+    QUERY_EXCEPT_CLAUSE,
+    QUERY_PASS_BLOCK,
+    QUERY_EXCEPT_EXPRESSION,
+    QUERY_FIND_IDENTIFIERS,
+    QUERY_TRY_STMT,
+    QUERY_EXCEPT_CLAUSE,
+    QUERY_EXCEPT_CLAUSE,
+    QUERY_EXPRESSION_STATEMENT,
+    QUERY_TRY_STMT,
+    QUERY_TRY_STMT,
+    QUERY_BROAD_EXCEPTION_RAISED,
+    QUERY_TRY_EXCEPT_RAISE,
+    QUERY_RAISE_STATEMENT,
+)
 
 from .exceptions import (
     ExceptClauseExpectedException,
@@ -141,6 +160,7 @@ def count_except(node: Node):
     captures = QUERY_EXCEPT_CLAUSE.captures(node)
     return len(captures)
 
+
 def check_function_has_except_handler(node: Node):
     captures = QUERY_EXCEPT_CLAUSE.captures(node)
     return len(captures) != 0
@@ -158,6 +178,47 @@ def check_function_has_nested_try(node: Node):
             return True
 
     return False
+
+
+def count_broad_raise(node: Node):
+    return len(QUERY_BROAD_EXCEPTION_RAISED.captures(node))
+
+
+def count_try_except_raise(node: Node):
+    return len(
+        list(filter(
+            lambda x: (x[1] == 'raise.identifier' and x[0].text == b'Except') or
+            (x[1] == 'raise.stmt' and x[0].text == b'raise'),
+            QUERY_TRY_EXCEPT_RAISE.captures(node))))
+
+
+def count_misplaced_bare_raise(node: Node):
+    raise_statements = QUERY_RAISE_STATEMENT.captures(node)
+    counter = 0
+    for node, _ in raise_statements:
+        if (has_misplaced_bare_raise(node)):
+            counter += 1
+    return counter
+
+
+def has_misplaced_bare_raise(raise_stmt: Node):
+    # scope = node.scope()
+    # if (
+    #     isinstance(scope, nodes.FunctionDef)
+    #     and scope.is_method()
+    #     and scope.name == "__exit__"
+    # ):
+    #     return
+
+    current = raise_stmt
+    # Stop when a new scope is generated or when the raise
+    # statement is found inside a TryFinally.
+    ignores = ('except_clause', 'function_definition')
+    while current and current.type not in ignores:
+        current = current.parent
+
+    expected = ('except_clause', )
+    return not current or current.type not in expected
 
 
 def print_pair_task1(df, delay=0):
@@ -186,7 +247,8 @@ def print_pair_task2(df: pd.DataFrame, delay=False):
         print("[Task 2] Empty Dataframe")
         return
     for try_lines, except_lines in zip(df["try"], df["except"]):
-        print(get_color_string(bcolors.OKGREEN, decode_indent("\n".join(try_lines))))
+        print(get_color_string(bcolors.OKGREEN,
+              decode_indent("\n".join(try_lines))))
         print(get_color_string(bcolors.FAIL, decode_indent("\n".join(except_lines))))
         print()
         time.sleep(delay)

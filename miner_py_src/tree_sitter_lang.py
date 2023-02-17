@@ -47,6 +47,9 @@ QUERY_PASS_BLOCK: Query = PY_LANGUAGE.query(
 QUERY_FIND_IDENTIFIERS: Query = PY_LANGUAGE.query(
     """(identifier) @identifier""")
 
+QUERY_RAISE_STATEMENT: Query = PY_LANGUAGE.query(
+    """(raise_statement) @raise.stmt""")
+
 QUERY_BROAD_EXCEPTION_RAISED: Query = PY_LANGUAGE.query(
     """(raise_statement (call (identifier) @raise.type))""")
 

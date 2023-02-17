@@ -109,7 +109,7 @@ def collect_stats(files, project):
 
     df = pd.DataFrame(
         columns=["file", "function", "n_try_except", "n_try_pass", 
-                 "n_generic_except", "n_captures_broad_raise", "n_captures_try_except_raise"]
+                 "n_generic_except", "n_captures_broad_raise", "n_captures_try_except_raise", "n_captures_try_except_raise"]
     )
 
     file_stats = FileStats()
@@ -141,7 +141,7 @@ def collect_stats(files, project):
                 df = pd.concat(
                     [
                         pd.DataFrame(
-                            [[file_path, __get_method_name(child), metrics[0], metrics[1], metrics[2], metrics[3], metrics[4]]],
+                            [[file_path, __get_method_name(child), metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5]]],
                             columns=df.columns,
                         ),
                         df,
