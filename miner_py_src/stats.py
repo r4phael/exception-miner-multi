@@ -71,6 +71,8 @@ class FileStats:
 
         n_captures_misplaced_bare_raise = count_misplaced_bare_raise(func_def)
 
+        n_raise = count_except(func_def)
+
         for except_clause, _ in captures_except:
             n_try_except += 1
             if is_try_except_pass(except_clause):
@@ -83,6 +85,7 @@ class FileStats:
             n_try_except,
             n_try_pass,
             n_generic_except,
+            n_raise,
             n_captures_broad_raise,
             n_captures_try_except_raise,
             n_captures_misplaced_bare_raise

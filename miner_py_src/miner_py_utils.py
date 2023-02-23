@@ -179,6 +179,10 @@ def check_function_has_nested_try(node: Node):
 
     return False
 
+def count_raise(node: Node):
+    captures = QUERY_RAISE_STATEMENT.captures(node)
+    return len(captures)
+
 def get_bare_raise(node: Node):
     return list(filter(
             lambda x: x[0].text == b'raise',

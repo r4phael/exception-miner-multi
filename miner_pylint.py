@@ -3,8 +3,10 @@ import pandas as pd
 import pathlib
 import os, shutil
 import json
-from typing import List
+import psycopg2
 
+
+from typing import List
 from tqdm import tqdm
 
 from pydriller import Git
@@ -105,11 +107,11 @@ def __get_method_name(node) -> str:
         if child.type == 'identifier':
             return child.text.decode("utf-8")
 
-def collect_stats(files, project):
+def collect_parser(files, project):
 
     df = pd.DataFrame(
         columns=["file", "function", "n_try_except", "n_try_pass", 
-                 "n_generic_except", "n_captures_broad_raise", "n_captures_try_except_raise", "n_captures_misplaced_bare_raise"]
+                 "n_generic_except", "n_raise", "n_captures_broad_raise", "n_captures_try_except_raise", "n_captures_misplaced_bare_raise"]
     )
 
     file_stats = FileStats()
@@ -141,7 +143,7 @@ def collect_stats(files, project):
                 df = pd.concat(
                     [
                         pd.DataFrame(
-                            [[file_path, __get_method_name(child), metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5]]],
+                            [[file_path, __get_method_name(child), metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6]]],
                             columns=df.columns,
                         ),
                         df,
@@ -157,14 +159,13 @@ def collect_stats(files, project):
 
     # func_defs_try_pass = [f for f in func_defs if is_try_except_pass(f)]
     os.makedirs("output/parser/", exist_ok=True)
-    print(file_stats)
+    #print(file_stats)
     df.to_csv(f"output/parser/{project}_stats.csv", index=False)
 
 
 if __name__ == "__main__":
-    projects = ["pandas"]#["django", "flask", "pytorch", "pandas"]
+    projects = ["django", "flask", "pytorch", "pandas"]
     for project in projects:
         files = fetch_repositories(project)
-        print(files)
-        # collect_smells(files, project)
-        #collect_stats(files, project)
+        #collect_smells(files, project)
+        collect_parser(files, project)

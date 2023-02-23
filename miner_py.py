@@ -34,9 +34,6 @@ seed(10)
 logger = create_logger("exception_py_miner", "exception_py_miner.log")
 
 
-# Functio to sum two
-
-
 def fetch_repositories():
     projects = pd.read_csv("projects_py.csv", sep=",")
 
