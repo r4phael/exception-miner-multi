@@ -20,3 +20,5 @@ typing_extensions==4.4.0
 termcolor==2.2.0
 sqlalchemy==1.4.45
 psycopg2==2.9.5
+pandasql==0.7.3
+seaborn==0.12.2

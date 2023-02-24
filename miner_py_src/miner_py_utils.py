@@ -12,7 +12,7 @@ from miner_py_src.tree_sitter_lang import (
     QUERY_TRY_EXCEPT,
     QUERY_FUNCTION_DEF,
     QUERY_FUNCTION_DEF,
-    QUERY_FUNCTION_LITERAL,
+    QUERY_FUNCTION_IDENTIFIER,
     QUERY_TRY_STMT,
     QUERY_EXCEPT_CLAUSE,
     QUERY_PASS_BLOCK,
@@ -27,6 +27,9 @@ from miner_py_src.tree_sitter_lang import (
     QUERY_RAISE_STATEMENT_IDENTIFIER,
     QUERY_TRY_EXCEPT_RAISE,
     QUERY_RAISE_STATEMENT,
+    QUERY_TRY_ELSE,
+    QUERY_TRY_RETURN,
+    QUERY_EXCEPT_IDENTIFIER,
 )
 
 from .exceptions import (
@@ -178,6 +181,14 @@ def check_function_has_nested_try(node: Node):
             return True
 
     return False
+
+def count_try_else(node: Node):
+    captures = QUERY_TRY_ELSE.captures(node)
+    return len(captures)
+
+def count_try_return(node: Node):
+    captures = QUERY_TRY_RETURN.captures(node)
+    return len(captures)
 
 def count_raise(node: Node):
     captures = QUERY_RAISE_STATEMENT.captures(node)

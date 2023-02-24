@@ -1,11 +1,12 @@
 import unittest
 
-from miner_py_src.miner_py_utils import (Slices,
+from miner_py_utils import (Slices,
                                          check_function_has_except_handler,
                                          check_function_has_nested_try,
                                          count_lines_of_function_body, get_try_slices, 
-                                         count_misplaced_bare_raise, count_broad_exception_raised, count_try_except_raise, count_raise)
-from miner_py_src.tree_sitter_lang import QUERY_FUNCTION_DEF, parser
+                                         count_misplaced_bare_raise, count_broad_exception_raised, 
+                                         count_try_except_raise, count_raise, count_try_else, count_try_return)
+from tree_sitter_lang import QUERY_FUNCTION_DEF, parser
 
 
 class TestCheckFunctionHasExceptionHandler(unittest.TestCase):
@@ -399,7 +400,7 @@ def test_count_try_except_raise():
         self.assertEqual(actual, expected)
 
 
-    def test_count_raise(self):
+    def test_try_else(self):
         code = b'''
         def test_count_try_except_raise():
             if x <= 0:
@@ -417,6 +418,62 @@ def test_count_try_except_raise():
         expected = 2
 
         self.assertEqual(actual, expected)
+
+        def test_count_raise(self):
+            code =  b"""
+            def divide(x, y):
+                try:
+                    # Floor Division : Gives only Fractional
+                    # Part as Answer
+                    result = x // y
+                except ZeroDivisionError:
+                    print("Sorry ! You are dividing by zero ")
+                
+                if x>y :
+                    print('x is greater than y')
+                else:
+                    print("Nope, x is not greater than y")
+                
+                try:
+                    # Floor Division : Gives only Fractional
+                    # Part as Answer
+                    result = x // y
+                except ZeroDivisionError:
+                    print("Sorry ! You are dividing by zero ")
+                else:
+                    print("Yeah ! Your answer is :", result)
+                finally: 
+                    # this block is always executed  
+                    # regardless of exception generation. 
+                    print('This is always executed')  
+                """
+
+        captures = QUERY_FUNCTION_DEF.captures(parser.parse(code).root_node)
+        func_def, _ = captures[0]
+
+        actual = count_try_else(func_def)
+        expected = 2
+
+        self.assertEqual(actual, expected)
+
+        def test_count_try_return(self):
+            code = b'''
+            def to_integer(value):
+                try:
+                    return int(value)
+                except ValueError:
+                    return None'''
+
+            captures = QUERY_FUNCTION_DEF.captures(parser.parse(code).root_node)
+            func_def, _ = captures[0]
+
+            actual = count_try_return(func_def)
+            expected = 1
+
+            self.assertEqual(actual, expected)
+
+
+
 
 
 if __name__ == '__main__':
