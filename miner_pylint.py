@@ -116,7 +116,7 @@ def collect_parser(files, project):
     df = pd.DataFrame(
         columns=["file", "function", "func_body", "n_try_except", "n_try_pass",
                  "n_generic_except", "n_raise", "n_captures_broad_raise", "n_captures_try_except_raise", "n_captures_misplaced_bare_raise",
-                 "n_try_else", "n_try_return", "str_except_identifiers", "str_raise_identifiers"]
+                 "n_try_else", "n_try_return", "str_except_identifiers", "str_raise_identifiers", "except_block"]
     )
 
     file_stats = FileStats()

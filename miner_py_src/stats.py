@@ -85,6 +85,7 @@ class FileStats:
 
         captures_raise_ident = get_raise_identifiers(func_def)
 
+        except_block = list(map(lambda x: x[0].text.decode('utf-8'), captures_except))
         for except_clause, _ in captures_except:
             n_try_except += 1
             if is_try_except_pass(except_clause):
@@ -112,6 +113,7 @@ class FileStats:
             "n_try_return": n_try_return,
             "str_except_identifiers": str_except_identifiers,
             "str_raise_identifiers": str_raise_identifiers,
+            "except_block": except_block,
         }
 
 
