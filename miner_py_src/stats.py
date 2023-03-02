@@ -1,14 +1,16 @@
 from collections import Counter
 from miner_py_src.miner_py_utils import (
     count_except,
+    count_raise,
     statement_couter,
     is_try_except_pass,
     is_generic_except,
     count_broad_exception_raised,
     count_try_except_raise,
     count_misplaced_bare_raise,
-    count_try_else, 
+    count_try_else,
     count_try_return,
+    get_raise_identifiers,
 )
 from tqdm import tqdm
 from tree_sitter.binding import Node
@@ -73,14 +75,15 @@ class FileStats:
 
         n_captures_misplaced_bare_raise = count_misplaced_bare_raise(func_def)
 
-        n_raise = count_except(func_def)
+        n_raise = count_raise(func_def)
 
         n_try_else = count_try_else(func_def)
 
         n_try_return = count_try_return(func_def)
 
-        captures_except_ident = QUERY_EXCEPT_IDENTIFIER.captures(func_def)        
-    
+        captures_except_ident = QUERY_EXCEPT_IDENTIFIER.captures(func_def)
+
+        captures_raise_ident = get_raise_identifiers(func_def)
 
         for except_clause, _ in captures_except:
             n_try_except += 1
@@ -89,25 +92,27 @@ class FileStats:
             if is_generic_except(except_clause):
                 # tqdm.write(f"{file_path}:{func_def.id}")
                 n_generic_except += 1
-        
+
         str_except_identifiers = ""
         for ident, _ in captures_except_ident:
-            str_except_identifiers = " ".join([str_except_identifiers, ident.text.decode("utf-8")])
-                
+            str_except_identifiers = " ".join(
+                [str_except_identifiers, ident.text.decode("utf-8")])
+        str_raise_identifiers = " ".join(
+            map(lambda x: x.decode("utf-8"), captures_raise_ident))
 
-
-        return [
-            n_try_except,
-            n_try_pass,
-            n_generic_except,
-            n_raise,
-            n_captures_broad_raise,
-            n_captures_try_except_raise,
-            n_captures_misplaced_bare_raise,
-            n_try_else,
-            n_try_return,
-            str_except_identifiers
-        ]
+        return {
+            "n_try_except": n_try_except,
+            "n_try_pass": n_try_pass,
+            "n_generic_except": n_generic_except,
+            "n_raise": n_raise,
+            "n_captures_broad_raise": n_captures_broad_raise,
+            "n_captures_try_except_raise": n_captures_try_except_raise,
+            "n_captures_misplaced_bare_raise": n_captures_misplaced_bare_raise,
+            "n_try_else": n_try_else,
+            "n_try_return": n_try_return,
+            "str_except_identifiers": str_except_identifiers,
+            "str_raise_identifiers": str_raise_identifiers,
+        }
 
 
 class TBLDStats:

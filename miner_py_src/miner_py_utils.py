@@ -32,7 +32,7 @@ from miner_py_src.tree_sitter_lang import (
     QUERY_EXCEPT_IDENTIFIER,
 )
 
-from .exceptions import (
+from miner_py_src.exceptions import (
     ExceptClauseExpectedException,
     FunctionDefNotFoundException,
     TryNotFoundException,
@@ -182,22 +182,37 @@ def check_function_has_nested_try(node: Node):
 
     return False
 
+
 def count_try_else(node: Node):
     captures = QUERY_TRY_ELSE.captures(node)
     return len(captures)
+
 
 def count_try_return(node: Node):
     captures = QUERY_TRY_RETURN.captures(node)
     return len(captures)
 
+
 def count_raise(node: Node):
     captures = QUERY_RAISE_STATEMENT.captures(node)
     return len(captures)
 
+
+def get_raise_identifiers(node: Node):
+    captures = QUERY_RAISE_STATEMENT_IDENTIFIER.captures(node)
+    return list(map(
+        lambda x: x[0].text,
+        filter(
+                lambda x: (x[1] == 'raise.identifier'),
+                captures)
+    ))
+
+
 def get_bare_raise(node: Node):
     return list(filter(
-            lambda x: x[0].text == b'raise',
-            QUERY_RAISE_STATEMENT.captures(node)))
+        lambda x: x[0].text == b'raise',
+        QUERY_RAISE_STATEMENT.captures(node)))
+
 
 def count_broad_exception_raised(node: Node):
     return len(

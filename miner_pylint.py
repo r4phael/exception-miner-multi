@@ -1,7 +1,8 @@
 from subprocess import PIPE, run, call
 import pandas as pd
 import pathlib
-import os, shutil
+import os
+import shutil
 import json
 import psycopg2
 
@@ -61,7 +62,8 @@ def fetch_repositories(project):
 
     except Exception as ex:
         logger.warning(
-            "Exception Miner: error in project: {}, error: {}".format(project, str(ex))
+            "Exception Miner: error in project: {}, error: {}".format(
+                project, str(ex))
         )
 
 
@@ -102,22 +104,24 @@ def collect_smells(files, project):
                     )
                 )
 
+
 def __get_method_name(node) -> str:
     for child in node.children:
         if child.type == 'identifier':
             return child.text.decode("utf-8")
 
+
 def collect_parser(files, project):
 
     df = pd.DataFrame(
-        columns=["file", "function", "func_body", "n_try_except", "n_try_pass", 
+        columns=["file", "function", "func_body", "n_try_except", "n_try_pass",
                  "n_generic_except", "n_raise", "n_captures_broad_raise", "n_captures_try_except_raise", "n_captures_misplaced_bare_raise",
-                 "n_try_else", "n_try_return", "str_except_identifiers"]
+                 "n_try_else", "n_try_return", "str_except_identifiers", "str_raise_identifiers"]
     )
 
     file_stats = FileStats()
     pbar = tqdm(files)
-    func_defs: List[str] = [] #List[Node] = []
+    func_defs: List[str] = []  # List[Node] = []
     for file_path in pbar:
         print(f"File: {file_path}")
         pbar.set_description(f"Processing {str(file_path)[-40:].ljust(40)}")
@@ -133,18 +137,24 @@ def collect_parser(files, project):
         try:
             tree = tree_sitter_parser.parse(content)
         except SyntaxError as ex:
-            tqdm.write(f"###### SyntaxError Error!!! file: {file_path}.\n{str(ex)}")
+            tqdm.write(
+                f"###### SyntaxError Error!!! file: {file_path}.\n{str(ex)}")
         else:
             captures = get_function_defs(tree)
             for child in captures:
-                #print("Function: ", __get_method_name(child))
+                # print("Function: ", __get_method_name(child))
                 func_defs.append(__get_method_name(child))
                 file_stats.metrics(child, file_path)
                 metrics = file_stats.get_metrics(child)
                 df = pd.concat(
                     [
                         pd.DataFrame(
-                            [[file_path, __get_method_name(child), child.text.decode("utf-8"), metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6], metrics[7], metrics[8], metrics[9]]],
+                            [{
+                                "file": file_path,
+                                "function": __get_method_name(child),
+                                "func_body": child.text.decode("utf-8"),
+                                **metrics
+                            }],
                             columns=df.columns,
                         ),
                         df,
@@ -160,7 +170,7 @@ def collect_parser(files, project):
 
     # func_defs_try_pass = [f for f in func_defs if is_try_except_pass(f)]
     os.makedirs("output/parser/", exist_ok=True)
-    #print(file_stats)
+    # print(file_stats)
     df.to_csv(f"output/parser/{project}_stats.csv", index=False)
 
 
@@ -168,5 +178,5 @@ if __name__ == "__main__":
     projects = ["django", "flask", "pytorch", "pandas"]
     for project in projects:
         files = fetch_repositories(project)
-        #collect_smells(files, project)
+        # collect_smells(files, project)
         collect_parser(files, project)

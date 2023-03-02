@@ -5,7 +5,8 @@ from miner_py_utils import (Slices,
                                          check_function_has_nested_try,
                                          count_lines_of_function_body, get_try_slices, 
                                          count_misplaced_bare_raise, count_broad_exception_raised, 
-                                         count_try_except_raise, count_raise, count_try_else, count_try_return)
+                                         count_try_except_raise, count_raise, count_try_else, count_try_return,
+                                         get_raise_identifiers)
 from tree_sitter_lang import QUERY_FUNCTION_DEF, parser
 
 
@@ -238,6 +239,7 @@ def teste_nested_try_except():
 
         self.assertEqual(actual, expected)
 
+class TestCounters(unittest.TestCase):
     def test_count_misplaced_bare_raise_try_stmt(self):
         code = b'''
 def misplaced_bare_raise_try_stmt():
@@ -456,7 +458,7 @@ def test_count_try_except_raise():
 
         self.assertEqual(actual, expected)
 
-        def test_count_try_return(self):
+    def test_count_try_return(self):
             code = b'''
             def to_integer(value):
                 try:
@@ -472,8 +474,21 @@ def test_count_try_except_raise():
 
             self.assertEqual(actual, expected)
 
+class TestRaiseQueries(unittest.TestCase):
+    def test_get_raise_str_identifiers(self):
+        code = b'''
+        def teste_func1():
+            raise ValueError
+            raise ValueErrorF(0)
+            raise teste.teste'''
 
+        captures = QUERY_FUNCTION_DEF.captures(parser.parse(code).root_node)
+        func_def, _ = captures[0]
 
+        actual = get_raise_identifiers(func_def)
+        expected = [b'ValueError', b'ValueErrorF']
+
+        self.assertEqual(actual, expected)
 
 
 if __name__ == '__main__':
