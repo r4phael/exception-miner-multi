@@ -10,11 +10,12 @@ from miner_py_src.miner_py_utils import (
     count_misplaced_bare_raise,
     count_try_else,
     count_try_return,
+    get_except_identifiers,
     get_raise_identifiers,
 )
 from tqdm import tqdm
 from tree_sitter.binding import Node
-from miner_py_src.miner_py_utils import QUERY_TRY_STMT, QUERY_EXCEPT_CLAUSE, QUERY_EXCEPT_IDENTIFIER
+from miner_py_src.miner_py_utils import QUERY_TRY_STMT, QUERY_EXCEPT_CLAUSE
 
 
 class FileStats:
@@ -81,7 +82,7 @@ class FileStats:
 
         n_try_return = count_try_return(func_def)
 
-        captures_except_ident = QUERY_EXCEPT_IDENTIFIER.captures(func_def)
+        captures_except_ident = get_except_identifiers(func_def)
 
         captures_raise_ident = get_raise_identifiers(func_def)
 
@@ -94,12 +95,8 @@ class FileStats:
                 # tqdm.write(f"{file_path}:{func_def.id}")
                 n_generic_except += 1
 
-        str_except_identifiers = ""
-        for ident, _ in captures_except_ident:
-            str_except_identifiers = " ".join(
-                [str_except_identifiers, ident.text.decode("utf-8")])
-        str_raise_identifiers = " ".join(
-            map(lambda x: x.decode("utf-8"), captures_raise_ident))
+        str_except_identifiers = " ".join(captures_except_ident)
+        str_raise_identifiers = " ".join(captures_raise_ident)
 
         return {
             "n_try_except": n_try_except,

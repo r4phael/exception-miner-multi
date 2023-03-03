@@ -29,7 +29,6 @@ from miner_py_src.tree_sitter_lang import (
     QUERY_RAISE_STATEMENT,
     QUERY_TRY_ELSE,
     QUERY_TRY_RETURN,
-    QUERY_EXCEPT_IDENTIFIER,
 )
 
 from miner_py_src.exceptions import (
@@ -108,7 +107,7 @@ def get_function_defs(tree: Tree) -> List[Node]:
 
 
 def get_function_literal(node: Node):
-    captures = QUERY_FUNCTION_LITERAL.captures(node)
+    captures = QUERY_FUNCTION_IDENTIFIER.captures(node)
     if len(captures) == 0:
         raise FunctionDefNotFoundException("Not found")
     return captures[0][0]
@@ -198,10 +197,33 @@ def count_raise(node: Node):
     return len(captures)
 
 
+def get_except_identifiers(node: Node):
+    identifiers_str = []
+    captures = QUERY_EXCEPT_CLAUSE.captures(node)
+    for except_clause, _ in captures:
+        except_expressions = QUERY_EXCEPT_EXPRESSION.captures(except_clause)
+
+        for c, _ in except_expressions:
+            identifiers = QUERY_FIND_IDENTIFIERS.captures(c)
+
+            try:
+                ignore_identifier = c.text.decode(
+                    'utf-8').split('as')[1].strip()
+            except IndexError:
+                ignore_identifier = None
+
+            for identifier, _ in identifiers:
+                if (identifier.text.decode('utf-8') == ignore_identifier):
+                    continue
+                identifiers_str.append(identifier.text.decode('utf-8'))
+
+    return identifiers_str
+
+
 def get_raise_identifiers(node: Node):
     captures = QUERY_RAISE_STATEMENT_IDENTIFIER.captures(node)
     return list(map(
-        lambda x: x[0].text,
+        lambda x: x[0].text.decode('utf-8'),
         filter(
                 lambda x: (x[1] == 'raise.identifier'),
                 captures)

@@ -37,10 +37,6 @@ QUERY_TRY_EXCEPT: Query = PY_LANGUAGE.query(
     """(try_statement
         (except_clause)* @except.clause) @try.stmt""")
 
-QUERY_EXCEPT_IDENTIFIER: Query = PY_LANGUAGE.query(
-    """ (except_clause
-       (identifier)* @except.clause) """)
-
 QUERY_EXCEPT_CLAUSE: Query = PY_LANGUAGE.query(
     """(except_clause) @except.clause""")
 

@@ -6,7 +6,7 @@ from miner_py_utils import (Slices,
                             count_lines_of_function_body, get_try_slices,
                             count_misplaced_bare_raise, count_broad_exception_raised,
                             count_try_except_raise, count_raise, count_try_else, count_try_return,
-                            get_raise_identifiers)
+                            get_raise_identifiers, get_except_identifiers)
 from tree_sitter_lang import QUERY_FUNCTION_DEF, parser
 
 
@@ -487,7 +487,45 @@ class TestRaiseQueries(unittest.TestCase):
         func_def, _ = captures[0]
 
         actual = get_raise_identifiers(func_def)
-        expected = [b'ValueError', b'ValueErrorF']
+        expected = ['ValueError', 'ValueErrorF']
+
+        self.assertEqual(actual, expected)
+
+class TestExceptQueries(unittest.TestCase):
+    def test_get_except_identifiers_tuple(self):
+        code = b'''
+        def teste_func1():
+            try: 
+                print()
+            except (ValueError, ValueErrorF(0)):
+                pass'''
+
+        captures = QUERY_FUNCTION_DEF.captures(parser.parse(code).root_node)
+        func_def, _ = captures[0]
+
+        actual = get_except_identifiers(func_def)
+        expected = ['ValueError', 'ValueErrorF']
+
+        self.assertEqual(actual, expected)
+    
+    def test_get_except_identifiers(self):
+        code = b'''
+        def teste_func1():
+            try: 
+                print()
+            except ValueErrorF:
+                pass
+            
+            try: 
+                print()
+            except Exception as e:
+                pass'''
+
+        captures = QUERY_FUNCTION_DEF.captures(parser.parse(code).root_node)
+        func_def, _ = captures[0]
+
+        actual = get_except_identifiers(func_def)
+        expected = ['ValueErrorF', 'Exception']
 
         self.assertEqual(actual, expected)
 
