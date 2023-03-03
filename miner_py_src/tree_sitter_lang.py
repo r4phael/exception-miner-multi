@@ -75,3 +75,6 @@ QUERY_TRY_ELSE: Query = PY_LANGUAGE.query(
 
 QUERY_TRY_RETURN: Query = PY_LANGUAGE.query(
     """(try_statement (block (return_statement)) @return.stmt )""")
+
+QUERY_FINALLY_BLOCK: Query = PY_LANGUAGE.query(
+    """(finally_clause) @finally.stmt""")

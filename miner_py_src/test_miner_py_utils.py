@@ -5,7 +5,7 @@ from miner_py_utils import (Slices,
                                          check_function_has_nested_try,
                                          count_lines_of_function_body, get_try_slices, 
                                          count_misplaced_bare_raise, count_broad_exception_raised, 
-                                         count_try_except_raise, count_raise, count_try_else, count_try_return)
+                                         count_try_except_raise, count_raise, count_try_else, count_try_return, count_finally)
 from tree_sitter_lang import QUERY_FUNCTION_DEF, parser
 
 
@@ -468,6 +468,29 @@ def test_count_try_except_raise():
             func_def, _ = captures[0]
 
             actual = count_try_return(func_def)
+            expected = 1
+
+            self.assertEqual(actual, expected)
+
+        def test_count_try_finally(self):
+            code = b'''
+            def divide(x, y):
+                try:
+                    # Floor Division : Gives only Fractional
+                    # Part as Answer
+                    result = x // y
+                except ZeroDivisionError:
+                    print("Sorry ! You are dividing by zero ")                
+                finally: 
+                    # this block is always executed  
+                    # regardless of exception generation. 
+                    print('This is always executed')  
+            '''
+
+            captures = QUERY_FUNCTION_DEF.captures(parser.parse(code).root_node)
+            func_def, _ = captures[0]
+
+            actual = count_finally(func_def)
             expected = 1
 
             self.assertEqual(actual, expected)

@@ -30,6 +30,7 @@ from miner_py_src.tree_sitter_lang import (
     QUERY_TRY_ELSE,
     QUERY_TRY_RETURN,
     QUERY_EXCEPT_IDENTIFIER,
+    QUERY_FINALLY_BLOCK
 )
 
 from .exceptions import (
@@ -188,6 +189,10 @@ def count_try_else(node: Node):
 
 def count_try_return(node: Node):
     captures = QUERY_TRY_RETURN.captures(node)
+    return len(captures)
+
+def count_finally(node: Node):
+    captures = QUERY_FINALLY_BLOCK.captures(node)
     return len(captures)
 
 def count_raise(node: Node):

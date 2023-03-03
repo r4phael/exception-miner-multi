@@ -9,6 +9,7 @@ from miner_py_src.miner_py_utils import (
     count_misplaced_bare_raise,
     count_try_else, 
     count_try_return,
+    count_finally
 )
 from tqdm import tqdm
 from tree_sitter.binding import Node
@@ -79,7 +80,9 @@ class FileStats:
 
         n_try_return = count_try_return(func_def)
 
-        captures_except_ident = QUERY_EXCEPT_IDENTIFIER.captures(func_def)        
+        captures_except_ident = QUERY_EXCEPT_IDENTIFIER.captures(func_def)       
+
+        n_finally = count_finally(func_def) 
     
 
         for except_clause, _ in captures_except:
@@ -99,6 +102,7 @@ class FileStats:
         return [
             n_try_except,
             n_try_pass,
+            n_finally,
             n_generic_except,
             n_raise,
             n_captures_broad_raise,

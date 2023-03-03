@@ -110,7 +110,7 @@ def __get_method_name(node) -> str:
 def collect_parser(files, project):
 
     df = pd.DataFrame(
-        columns=["file", "function", "func_body", "n_try_except", "n_try_pass", 
+        columns=["file", "function", "func_body", "n_try_except", "n_try_pass", "n_finally", 
                  "n_generic_except", "n_raise", "n_captures_broad_raise", "n_captures_try_except_raise", "n_captures_misplaced_bare_raise",
                  "n_try_else", "n_try_return", "str_except_identifiers"]
     )
@@ -144,7 +144,7 @@ def collect_parser(files, project):
                 df = pd.concat(
                     [
                         pd.DataFrame(
-                            [[file_path, __get_method_name(child), child.text.decode("utf-8"), metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6], metrics[7], metrics[8], metrics[9]]],
+                            [[file_path, __get_method_name(child), child.text.decode("utf-8"), metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6], metrics[7], metrics[8], metrics[9], metrics[10]]],
                             columns=df.columns,
                         ),
                         df,
