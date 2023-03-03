@@ -22,6 +22,14 @@
             "justMyCode": true,
         },
         {
+            "name": "miner_pylint",
+            "type": "python",
+            "request": "launch",
+            "program": "miner_pylint.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+        },
+        {
             "name": "miner preprocess",
             "type": "python",
             "request": "launch",

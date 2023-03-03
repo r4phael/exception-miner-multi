@@ -1,11 +1,13 @@
 import unittest
 
 from miner_py_utils import (Slices,
-                                         check_function_has_except_handler,
-                                         check_function_has_nested_try,
-                                         count_lines_of_function_body, get_try_slices, 
-                                         count_misplaced_bare_raise, count_broad_exception_raised, 
-                                         count_try_except_raise, count_raise, count_try_else, count_try_return, count_finally)
+                            check_function_has_except_handler,
+                            check_function_has_nested_try,
+                            count_lines_of_function_body, get_try_slices, 
+                            count_misplaced_bare_raise, count_broad_exception_raised, 
+                            count_try_except_raise, count_raise, count_try_else, count_try_return, 
+                            count_finally, get_raise_identifiers, get_except_identifiers)
+
 from tree_sitter_lang import QUERY_FUNCTION_DEF, parser
 
 
@@ -238,6 +240,8 @@ def teste_nested_try_except():
 
         self.assertEqual(actual, expected)
 
+
+class TestCounters(unittest.TestCase):
     def test_count_misplaced_bare_raise_try_stmt(self):
         code = b'''
 def misplaced_bare_raise_try_stmt():
@@ -399,8 +403,7 @@ def test_count_try_except_raise():
 
         self.assertEqual(actual, expected)
 
-
-    def test_try_else(self):
+    def test_count_raise(self):
         code = b'''
         def test_count_try_except_raise():
             if x <= 0:
@@ -419,33 +422,33 @@ def test_count_try_except_raise():
 
         self.assertEqual(actual, expected)
 
-        def test_count_raise(self):
-            code =  b"""
-            def divide(x, y):
-                try:
-                    # Floor Division : Gives only Fractional
-                    # Part as Answer
-                    result = x // y
-                except ZeroDivisionError:
-                    print("Sorry ! You are dividing by zero ")
-                
-                if x>y :
-                    print('x is greater than y')
-                else:
-                    print("Nope, x is not greater than y")
-                
-                try:
-                    # Floor Division : Gives only Fractional
-                    # Part as Answer
-                    result = x // y
-                except ZeroDivisionError:
-                    print("Sorry ! You are dividing by zero ")
-                else:
-                    print("Yeah ! Your answer is :", result)
-                finally: 
-                    # this block is always executed  
-                    # regardless of exception generation. 
-                    print('This is always executed')  
+    def test_try_else(self):
+        code = b"""
+        def divide(x, y):
+            try:
+                # Floor Division : Gives only Fractional
+                # Part as Answer
+                result = x // y
+            except ZeroDivisionError:
+                print("Sorry ! You are dividing by zero ")
+            
+            if x>y :
+                print('x is greater than y')
+            else:
+                print("Nope, x is not greater than y")
+            
+            try:
+                # Floor Division : Gives only Fractional
+                # Part as Answer
+                result = x // y
+            except ZeroDivisionError:
+                print("Sorry ! You are dividing by zero ")
+            else:
+                print("Yeah ! Your answer is :", result)
+            finally: 
+                # this block is always executed  
+                # regardless of exception generation. 
+                print('This is always executed')  
                 """
 
         captures = QUERY_FUNCTION_DEF.captures(parser.parse(code).root_node)
@@ -456,21 +459,38 @@ def test_count_try_except_raise():
 
         self.assertEqual(actual, expected)
 
-        def test_count_try_return(self):
-            code = b'''
+    def test_count_try_return(self):
+        code = b'''
             def to_integer(value):
                 try:
                     return int(value)
                 except ValueError:
                     return None'''
 
-            captures = QUERY_FUNCTION_DEF.captures(parser.parse(code).root_node)
-            func_def, _ = captures[0]
+        captures = QUERY_FUNCTION_DEF.captures(parser.parse(code).root_node)
+        func_def, _ = captures[0]
 
-            actual = count_try_return(func_def)
-            expected = 1
+        actual = count_try_return(func_def)
+        expected = 1
 
-            self.assertEqual(actual, expected)
+        self.assertEqual(actual, expected)
+
+
+class TestRaiseQueries(unittest.TestCase):
+    def test_get_raise_str_identifiers(self):
+        code = b'''
+        def teste_func1():
+            raise ValueError
+            raise ValueErrorF(0)
+            raise teste.teste'''
+
+        captures = QUERY_FUNCTION_DEF.captures(parser.parse(code).root_node)
+        func_def, _ = captures[0]
+
+        actual = get_raise_identifiers(func_def)
+        expected = ['ValueError', 'ValueErrorF']
+
+        self.assertEqual(actual, expected)
 
         def test_count_try_finally(self):
             code = b'''
@@ -496,7 +516,31 @@ def test_count_try_except_raise():
             self.assertEqual(actual, expected)
 
 
+        actual = get_except_identifiers(func_def)
+        expected = ['ValueError', 'ValueErrorF', 'ValueError2', 'ValueError3']
 
+        self.assertEqual(actual, expected)
+    
+    def test_get_except_identifiers(self):
+        code = b'''
+        def teste_func1():
+            try: 
+                print()
+            except ValueErrorF:
+                pass
+            
+            try: 
+                print()
+            except Exception as e:
+                pass'''
+
+        captures = QUERY_FUNCTION_DEF.captures(parser.parse(code).root_node)
+        func_def, _ = captures[0]
+
+        actual = get_except_identifiers(func_def)
+        expected = ['ValueErrorF', 'Exception']
+
+        self.assertEqual(actual, expected)
 
 
 if __name__ == '__main__':

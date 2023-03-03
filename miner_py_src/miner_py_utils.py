@@ -33,7 +33,7 @@ from miner_py_src.tree_sitter_lang import (
     QUERY_FINALLY_BLOCK
 )
 
-from .exceptions import (
+from miner_py_src.exceptions import (
     ExceptClauseExpectedException,
     FunctionDefNotFoundException,
     TryNotFoundException,
@@ -109,7 +109,7 @@ def get_function_defs(tree: Tree) -> List[Node]:
 
 
 def get_function_literal(node: Node):
-    captures = QUERY_FUNCTION_LITERAL.captures(node)
+    captures = QUERY_FUNCTION_IDENTIFIER.captures(node)
     if len(captures) == 0:
         raise FunctionDefNotFoundException("Not found")
     return captures[0][0]
@@ -183,9 +183,11 @@ def check_function_has_nested_try(node: Node):
 
     return False
 
+
 def count_try_else(node: Node):
     captures = QUERY_TRY_ELSE.captures(node)
     return len(captures)
+
 
 def count_try_return(node: Node):
     captures = QUERY_TRY_RETURN.captures(node)
@@ -199,10 +201,45 @@ def count_raise(node: Node):
     captures = QUERY_RAISE_STATEMENT.captures(node)
     return len(captures)
 
+
+def get_except_identifiers(node: Node):
+    identifiers_str = []
+    captures = QUERY_EXCEPT_CLAUSE.captures(node)
+    for except_clause, _ in captures:
+        except_expressions = QUERY_EXCEPT_EXPRESSION.captures(except_clause)
+
+        for c, _ in except_expressions:
+            identifiers = QUERY_FIND_IDENTIFIERS.captures(c)
+
+            try:
+                ignore_identifier = c.text.decode(
+                    'utf-8').split('as')[1].strip()
+            except IndexError:
+                ignore_identifier = None
+
+            for identifier, _ in identifiers:
+                if (identifier.text.decode('utf-8') == ignore_identifier):
+                    continue
+                identifiers_str.append(identifier.text.decode('utf-8'))
+
+    return identifiers_str
+
+
+def get_raise_identifiers(node: Node):
+    captures = QUERY_RAISE_STATEMENT_IDENTIFIER.captures(node)
+    return list(map(
+        lambda x: x[0].text.decode('utf-8'),
+        filter(
+                lambda x: (x[1] == 'raise.identifier'),
+                captures)
+    ))
+
+
 def get_bare_raise(node: Node):
     return list(filter(
-            lambda x: x[0].text == b'raise',
-            QUERY_RAISE_STATEMENT.captures(node)))
+        lambda x: x[0].text == b'raise',
+        QUERY_RAISE_STATEMENT.captures(node)))
+
 
 def count_broad_exception_raised(node: Node):
     return len(
