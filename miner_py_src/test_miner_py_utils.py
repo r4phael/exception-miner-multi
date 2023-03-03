@@ -498,13 +498,15 @@ class TestExceptQueries(unittest.TestCase):
             try: 
                 print()
             except (ValueError, ValueErrorF(0)):
+                pass
+            except (ValueError2, ValueError3(0)) as e:
                 pass'''
 
         captures = QUERY_FUNCTION_DEF.captures(parser.parse(code).root_node)
         func_def, _ = captures[0]
 
         actual = get_except_identifiers(func_def)
-        expected = ['ValueError', 'ValueErrorF']
+        expected = ['ValueError', 'ValueErrorF', 'ValueError2', 'ValueError3']
 
         self.assertEqual(actual, expected)
     
