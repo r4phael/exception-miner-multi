@@ -1,5 +1,5 @@
 from collections import Counter
-from miner_py_src.miner_py_utils import (
+from .miner_py_utils import (
     count_except,
     count_raise,
     statement_couter,
@@ -12,11 +12,13 @@ from miner_py_src.miner_py_utils import (
     count_try_return,
     count_finally,
     get_except_identifiers,
-    get_raise_identifiers
+    get_raise_identifiers,
+    get_except_clause,
+    get_except_block
 )
 from tqdm import tqdm
 from tree_sitter.binding import Node
-from miner_py_src.miner_py_utils import QUERY_TRY_STMT, QUERY_EXCEPT_CLAUSE
+from .miner_py_utils import QUERY_TRY_STMT, QUERY_EXCEPT_CLAUSE
 
 
 class FileStats:
@@ -69,7 +71,7 @@ class FileStats:
         """
         n_try_except, n_try_pass, n_generic_except = 0, 0, 0
 
-        captures_except = QUERY_EXCEPT_CLAUSE.captures(func_def)
+        captures_except = get_except_clause(func_def)
 
         n_captures_broad_raise = count_broad_exception_raised(func_def)
 
@@ -91,7 +93,12 @@ class FileStats:
 
         captures_raise_ident = get_raise_identifiers(func_def)
 
-        except_block = list(map(lambda x: x[0].text.decode('utf-8'), captures_except))
+        test = get_except_block(func_def)
+        print(f"##### test Exception Block ######: {test}")
+        print(f"####### func_def ###### : {func_def} ")
+        except_block = list(map(lambda x: x[0].text.decode('utf-8'), get_except_block(func_def)))
+        print(f"##### Exception Block ######: {except_block}")
+        
         for except_clause, _ in captures_except:
             n_try_except += 1
             if is_try_except_pass(except_clause):
@@ -106,6 +113,7 @@ class FileStats:
         return {
             "n_try_except": n_try_except,
             "n_try_pass": n_try_pass,
+            "n_finally": n_finally,
             "n_generic_except": n_generic_except,
             "n_raise": n_raise,
             "n_captures_broad_raise": n_captures_broad_raise,
@@ -116,7 +124,6 @@ class FileStats:
             "str_except_identifiers": str_except_identifiers,
             "str_raise_identifiers": str_raise_identifiers,
             "except_block": except_block,
-            "n_finally": n_finally
         }
 
 

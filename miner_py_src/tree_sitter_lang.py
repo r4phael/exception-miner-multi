@@ -40,6 +40,9 @@ QUERY_TRY_EXCEPT: Query = PY_LANGUAGE.query(
 QUERY_EXCEPT_CLAUSE: Query = PY_LANGUAGE.query(
     """(except_clause) @except.clause""")
 
+QUERY_EXCEPT_BLOCK: Query = PY_LANGUAGE.query(
+    """(except_clause (block) @body)""")
+
 QUERY_EXCEPT_EXPRESSION: Query = PY_LANGUAGE.query(
     """(except_clause (_) @except.expression (block))""")
 

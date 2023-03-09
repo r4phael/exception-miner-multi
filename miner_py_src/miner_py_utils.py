@@ -8,7 +8,7 @@ from termcolor import colored
 from tqdm import tqdm
 from tree_sitter.binding import Node, Tree
 
-from miner_py_src.tree_sitter_lang import (
+from .tree_sitter_lang import (
     QUERY_TRY_EXCEPT,
     QUERY_FUNCTION_DEF,
     QUERY_FUNCTION_DEF,
@@ -19,8 +19,6 @@ from miner_py_src.tree_sitter_lang import (
     QUERY_EXCEPT_EXPRESSION,
     QUERY_FIND_IDENTIFIERS,
     QUERY_TRY_STMT,
-    QUERY_EXCEPT_CLAUSE,
-    QUERY_EXCEPT_CLAUSE,
     QUERY_EXPRESSION_STATEMENT,
     QUERY_TRY_STMT,
     QUERY_TRY_STMT,
@@ -29,11 +27,11 @@ from miner_py_src.tree_sitter_lang import (
     QUERY_RAISE_STATEMENT,
     QUERY_TRY_ELSE,
     QUERY_TRY_RETURN,
-    QUERY_EXCEPT_IDENTIFIER,
-    QUERY_FINALLY_BLOCK
+    QUERY_FINALLY_BLOCK,
+    QUERY_EXCEPT_BLOCK,
 )
 
-from miner_py_src.exceptions import (
+from .exceptions import (
     ExceptClauseExpectedException,
     FunctionDefNotFoundException,
     TryNotFoundException,
@@ -169,6 +167,14 @@ def check_function_has_except_handler(node: Node):
     captures = QUERY_EXCEPT_CLAUSE.captures(node)
     return len(captures) != 0
 
+def get_except_clause(node: Node):
+    captures = QUERY_EXCEPT_CLAUSE.captures(node)
+    return captures
+
+
+def get_except_block(node: Node):
+    captures = QUERY_EXCEPT_BLOCK.captures(node)
+    return captures
 
 def statement_couter(node: Node):
     captures = QUERY_EXPRESSION_STATEMENT.captures(node)

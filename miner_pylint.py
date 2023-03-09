@@ -116,7 +116,7 @@ def collect_parser(files, project):
     df = pd.DataFrame(
         columns=["file", "function", "func_body", "n_try_except", "n_try_pass", "n_finally", 
                  "n_generic_except", "n_raise", "n_captures_broad_raise", "n_captures_try_except_raise", "n_captures_misplaced_bare_raise",
-                 "n_try_else", "n_try_return", "str_except_identifiers", "str_raise_identifiers", "except_block"]
+                 "n_try_else", "n_try_return", "str_except_identifiers", "str_raise_identifiers", "str_except_block"]
     )
 
     file_stats = FileStats()
@@ -175,7 +175,7 @@ def collect_parser(files, project):
 
 
 if __name__ == "__main__":
-    projects = ["django", "flask", "pytorch", "pandas"]
+    projects = ["flask"] #["django", "flask", "pytorch", "pandas"]
     for project in projects:
         files = fetch_repositories(project)
         # collect_smells(files, project)

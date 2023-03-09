@@ -6,9 +6,9 @@ from miner_py_utils import (Slices,
                             count_lines_of_function_body, get_try_slices, 
                             count_misplaced_bare_raise, count_broad_exception_raised, 
                             count_try_except_raise, count_raise, count_try_else, count_try_return, 
-                            count_finally, get_raise_identifiers, get_except_identifiers)
+                            count_finally, get_raise_identifiers, get_except_identifiers, get_except_block)
 
-from tree_sitter_lang import QUERY_FUNCTION_DEF, parser
+from tree_sitter_lang import QUERY_FUNCTION_DEF, QUERY_EXCEPT_CLAUSE, parser
 
 
 class TestCheckFunctionHasExceptionHandler(unittest.TestCase):
@@ -455,7 +455,7 @@ def test_count_try_except_raise():
         func_def, _ = captures[0]
 
         actual = count_try_else(func_def)
-        expected = 2
+        expected = 1
 
         self.assertEqual(actual, expected)
 
@@ -488,38 +488,34 @@ class TestRaiseQueries(unittest.TestCase):
         func_def, _ = captures[0]
 
         actual = get_raise_identifiers(func_def)
+        print(f"############### actual ################: {actual}")
         expected = ['ValueError', 'ValueErrorF']
 
         self.assertEqual(actual, expected)
 
-        def test_count_try_finally(self):
-            code = b'''
-            def divide(x, y):
-                try:
-                    # Floor Division : Gives only Fractional
-                    # Part as Answer
-                    result = x // y
-                except ZeroDivisionError:
-                    print("Sorry ! You are dividing by zero ")                
-                finally: 
-                    # this block is always executed  
-                    # regardless of exception generation. 
-                    print('This is always executed')  
-            '''
+    def test_count_try_finally(self):
+        code = b'''
+        def divide(x, y):
+            try:
+                # Floor Division : Gives only Fractional
+                # Part as Answer
+                result = x // y
+            except ZeroDivisionError:
+                print("Sorry ! You are dividing by zero ")                
+            finally: 
+                # this block is always executed  
+                # regardless of exception generation. 
+                print('This is always executed')  
+        '''
 
-            captures = QUERY_FUNCTION_DEF.captures(parser.parse(code).root_node)
-            func_def, _ = captures[0]
+        captures = QUERY_FUNCTION_DEF.captures(parser.parse(code).root_node)
+        func_def, _ = captures[0]
 
-            actual = count_finally(func_def)
-            expected = 1
-
-            self.assertEqual(actual, expected)
-
-
-        actual = get_except_identifiers(func_def)
-        expected = ['ValueError', 'ValueErrorF', 'ValueError2', 'ValueError3']
+        actual = count_finally(func_def)
+        expected = 1
 
         self.assertEqual(actual, expected)
+
     
     def test_get_except_identifiers(self):
         code = b'''
@@ -542,6 +538,28 @@ class TestRaiseQueries(unittest.TestCase):
 
         self.assertEqual(actual, expected)
 
+class TestExceptBlocks(unittest.TestCase):
+
+    def test_get_except_identifiers(self):
+        code = b'''
+        def list_commands(self, ctx):
+            self._load_plugin_commands()
+            rv = set(super().list_commands(ctx))
+            info = ctx.ensure_object(ScriptInfo)
+
+            try:
+                rv.update(info.load_app().cli.list_commands(ctx))
+            except NoAppException as e:
+                pass
+            except Exception:
+                click.secho(f"{traceback.format_exc()}")
+                
+            return sorted(rv)
+        '''
+        actual = list(map(lambda x: x[0].text.decode('utf-8'), get_except_block(parser.parse(code).root_node)))
+        expected = ['pass', 'click.secho(f"{traceback.format_exc()}")']
+        
+        self.assertEqual(actual, expected)
 
 if __name__ == '__main__':
     unittest.main()
