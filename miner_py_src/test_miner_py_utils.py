@@ -1,6 +1,6 @@
 import unittest
 
-from miner_py_utils import (Slices,
+from miner_py_src.miner_py_utils import (Slices,
                             check_function_has_except_handler,
                             check_function_has_nested_try,
                             count_lines_of_function_body, get_try_slices, 
