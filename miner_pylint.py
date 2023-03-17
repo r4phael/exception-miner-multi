@@ -13,8 +13,10 @@ from tqdm import tqdm
 from pydriller import Git
 from utils import create_logger
 from miner_py_src.tree_sitter_lang import parser as tree_sitter_parser
+from miner_py_src.call_graph import CFG, generate_cfg
 from tree_sitter.binding import Node
 from miner_py_src.stats import FileStats
+from miner_py_src.exceptions import FunctionDefNotFoundException
 
 from miner_py_src.miner_py_utils import (
     check_function_has_except_handler,
@@ -105,18 +107,18 @@ def collect_smells(files, project):
                 )
 
 
-def __get_method_name(node) -> str:
+def __get_method_name(node) -> str | None:
     for child in node.children:
         if child.type == 'identifier':
             return child.text.decode("utf-8")
 
 
-def collect_parser(files, project):
+def collect_parser(files, project_name):
 
     df = pd.DataFrame(
-        columns=["file", "function", "func_body", "n_try_except", "n_try_pass", "n_finally", 
+        columns=["file", "function", "func_body", "n_try_except", "n_try_pass", "n_finally",
                  "n_generic_except", "n_raise", "n_captures_broad_raise", "n_captures_try_except_raise", "n_captures_misplaced_bare_raise",
-                 "n_try_else", "n_try_return", "str_except_identifiers", "str_raise_identifiers", "str_except_block"]
+                 "n_try_else", "n_try_return", "str_except_identifiers", "str_raise_identifiers", "str_except_block", "str_uncaught_exceptions"]
     )
 
     file_stats = FileStats()
@@ -143,7 +145,12 @@ def collect_parser(files, project):
             captures = get_function_defs(tree)
             for child in captures:
                 # print("Function: ", __get_method_name(child))
-                func_defs.append(__get_method_name(child))
+                function_identifier = __get_method_name(child)
+                if function_identifier is None:
+                    raise FunctionDefNotFoundException(
+                        f'Function identifier not found:\n {child.text}')
+
+                func_defs.append(function_identifier)
                 file_stats.metrics(child, file_path)
                 metrics = file_stats.get_metrics(child)
                 df = pd.concat(
@@ -153,7 +160,8 @@ def collect_parser(files, project):
                                 "file": file_path,
                                 "function": __get_method_name(child),
                                 "func_body": child.text.decode("utf-8"),
-                                **metrics
+                                **metrics,
+                                'str_uncaught_exceptions': ''
                             }],
                             columns=df.columns,
                         ),
@@ -164,6 +172,53 @@ def collect_parser(files, project):
     file_stats.num_files += len(files)
     file_stats.num_functions += len(func_defs)
 
+    call_graph = generate_cfg(project_name, os.path.normpath(
+        f"projects/py/{project_name}"))
+
+    catch_nodes = {}
+    raise_nodes = {}
+    for func_name in call_graph.keys():
+        func_file, func_identifier = func_name.split(':')
+        query = df[(df['file'].str.contains(func_file) &
+                    df['function'].str.fullmatch(func_identifier))]
+
+        if query.empty:
+            continue
+
+        if query.iloc[0]['str_raise_identifiers']:
+            raise_nodes[func_name] = query.iloc[0]['str_raise_identifiers'].split(
+                ' ')
+        if query.iloc[0]['str_except_identifiers']:
+            catch_nodes[func_name] = query.iloc[0]['str_except_identifiers'].split(
+                ' ')
+
+    call_graph_cfg = CFG(call_graph, catch_nodes)
+
+    for func_name, raise_types in raise_nodes.items():
+        # func_file_raise, func_identifier_raise = func_name_raise.split(':')
+        cfg_uncaught_exceptions = call_graph_cfg.get_uncaught_exceptions(
+            func_name, raise_types)
+        if cfg_uncaught_exceptions == {}:
+            continue
+
+        for f_full_identifier, uncaught_exceptions in cfg_uncaught_exceptions.items():
+            func_file, func_identifier = f_full_identifier.split(':')
+            query = df[(df['file'].str.contains(func_file) &
+                        df['function'].str.fullmatch(func_identifier))]
+
+            if query.empty:
+                continue
+
+            idx = int(query.iloc[0].name)
+
+            for uncaught_exception in uncaught_exceptions:
+                old_value = str(
+                    df.iloc[idx, df.columns.get_loc('str_uncaught_exceptions')])
+
+                # append uncaught exception
+                df.iloc[idx, df.columns.get_loc(
+                    'str_uncaught_exceptions')] = (old_value + f' {func_name}:{uncaught_exception}').strip()
+
     # func_defs_try_except = [
     #     f for f in func_defs if check_function_has_except_handler(f)
     # ]  # and not check_function_has_nested_try(f)    ]
@@ -171,11 +226,11 @@ def collect_parser(files, project):
     # func_defs_try_pass = [f for f in func_defs if is_try_except_pass(f)]
     os.makedirs("output/parser/", exist_ok=True)
     # print(file_stats)
-    df.to_csv(f"output/parser/{project}_stats.csv", index=False)
+    df.to_csv(f"output/parser/{project_name}_stats.csv", index=False)
 
 
 if __name__ == "__main__":
-    projects = ["flask"] #["django", "flask", "pytorch", "pandas"]
+    projects = ["flask"]  # ["django", "flask", "pytorch", "pandas"]
     for project in projects:
         files = fetch_repositories(project)
         # collect_smells(files, project)

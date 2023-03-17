@@ -5,6 +5,7 @@ class MinerPyError(Exception):
 class TryNotFoundException(MinerPyError):
     pass
 
+
 class ExceptClauseExpectedException(MinerPyError):
     pass
 
@@ -16,3 +17,6 @@ class FunctionDefNotFoundException(MinerPyError):
 class TreeSitterNodeException(MinerPyError):
     pass
 
+
+class CallGraphError(MinerPyError):
+    pass
