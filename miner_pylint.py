@@ -175,7 +175,7 @@ def collect_parser(files, project):
 
 
 if __name__ == "__main__":
-    projects = ["flask"] #["django", "flask", "pytorch", "pandas"]
+    projects = ["django", "flask", "pytorch", "pandas"]
     for project in projects:
         files = fetch_repositories(project)
         # collect_smells(files, project)

@@ -93,11 +93,7 @@ class FileStats:
 
         captures_raise_ident = get_raise_identifiers(func_def)
 
-        test = get_except_block(func_def)
-        print(f"##### test Exception Block ######: {test}")
-        print(f"####### func_def ###### : {func_def} ")
-        except_block = list(map(lambda x: x[0].text.decode('utf-8'), get_except_block(func_def)))
-        print(f"##### Exception Block ######: {except_block}")
+        captures_except_block = list(map(lambda x: x[0].text.decode('utf-8'), get_except_block(func_def)))
         
         for except_clause, _ in captures_except:
             n_try_except += 1
@@ -109,6 +105,7 @@ class FileStats:
 
         str_except_identifiers = " ".join(captures_except_ident)
         str_raise_identifiers = " ".join(captures_raise_ident)
+        str_except_block = " ".join(captures_except_block)
 
         return {
             "n_try_except": n_try_except,
@@ -123,7 +120,7 @@ class FileStats:
             "n_try_return": n_try_return,
             "str_except_identifiers": str_except_identifiers,
             "str_raise_identifiers": str_raise_identifiers,
-            "except_block": except_block,
+            "str_except_block": str_except_block,
         }
 
 
