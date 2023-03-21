@@ -1,57 +1,50 @@
 import os
 import subprocess
 import json
+import glob
 from miner_py_src.exceptions import CallGraphError
-
-"""
-`Install graphviz cpan:`
-
-sudo apt install build-essential
-sudo apt install libexpat1-dev
-sudo apt install graphviz
-sudo cpan install GraphViz
-
-`Install JSON modules:`
-
-sudo cpan install JSON::XS
-
-`Install callGraph:`
-
-sudo apt install unzip
-wget -o- https://github.com/koknat/callGraph/archive/refs/heads/main.zip
-unzip -a main.zip
-rm main.zip
-mv callGraph-main/ callGraph
-cd callGraph/
-sudo ln -s /home/<username>/callGraph/callGraph /usr/bin/callGraph
-sudo chmod ugo+x /usr/bin/callGraph
-"""
 
 
 def generate_cfg(project_name, project_folder):
     current_path = os.getcwd()
     os.makedirs(
         f'../output/call_graph/{project_name}', exist_ok=True)
-    os.chdir(os.path.normpath(os.path.join(project_folder, '../')))
+    os.chdir(os.path.normpath(os.path.join(project_folder)))
 
-    jsnout = os.path.normpath(os.path.join(
-        current_path, f"../output/call_graph/{project_name}/saida.json"))
-    output = os.path.normpath(os.path.join(
-        current_path, f"../output/call_graph/{project_name}/saida.dot"))
+    proc = subprocess.run([
+        'pycg',
+        *[os.path.abspath(x)
+          for x in glob.iglob(f"./**/{project_name}/**/*.py", recursive=True)],
+        *[os.path.abspath(x)
+          for x in glob.iglob(f"./{project_name}.py", recursive=False)],
+        '--package', project_name], stdout=subprocess.PIPE)
 
-    subprocess.run(
-        [
-            "callGraph", project_name,
-            "--jsnOut", jsnout,
-            "--output", output,
-            "--language", "py"
-        ]
-    )
+    if (proc.returncode != 0):
+        raise CallGraphError(proc.stdout)
+
     os.chdir(current_path)
 
-    json_file = open(jsnout, "r")
-    json_obj = json.load(json_file)
-    return json_obj
+    json_obj = json.loads(proc.stdout)
+    call_graph = {}
+    for func_name, calls in json_obj.items():
+        if func_name not in call_graph.keys():
+            call_graph[func_name] = {
+                'calls': [],
+                'called_by': [],
+            }
+
+        for call in calls:
+            call_graph[func_name]['calls'].append(call)
+
+            if call not in call_graph.keys():
+                call_graph[call] = {
+                    'calls': [],
+                    'called_by': [],
+                }
+            call_graph[call]['called_by'] = call_graph[call]['called_by'] or []
+            call_graph[call]['called_by'].append(func_name)
+
+    return call_graph
 
 
 class CFG():
@@ -59,17 +52,18 @@ class CFG():
         self.catch_nodes = catch_nodes
         self.graph = graph
 
-    def get_uncaught_exceptions(self, func_name: str, raise_types: list[str]) -> dict[str, str]:
+    def get_uncaught_exceptions(self, func_name: str, raise_types: list[str]) -> dict[str, list[str]]:
         if (func_name not in self.graph.keys()):
             raise CallGraphError(f"CFG: {func_name} not found")
 
-        export_data = {}
+        export_data: dict[str, list[str]] = {}
 
-        if 'called_by' not in self.graph[func_name].keys():
+        if len(self.graph[func_name]['called_by']) == 0:
             return export_data  # API call ??
 
-        for called_by in self.graph[func_name]['called_by'].keys():
+        for called_by in self.graph[func_name]['called_by']:
             if called_by not in self.catch_nodes.keys():
+                export_data[called_by] = raise_types
                 continue
 
             for raise_type in raise_types:

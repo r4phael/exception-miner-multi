@@ -4,18 +4,13 @@ from call_graph import CFG
 
 
 cfg_mock = {
-    "teste/teste.py:raise_exception": {
-        "called_by": {
-            "teste/teste.py:except_caller": 1
-        }
+    "teste.raise_exception": {
+        "calls": [],
+        "called_by": ["teste.except_caller"]
     },
-    "teste/teste.py:except_caller": {
-        "calls": {
-            "teste/teste.py:raise_exception": 1
-        },
-        "called_by": {
-            "teste/teste.py:except_caught": 1
-        }
+    "teste.except_caller": {
+        "calls": ["teste.raise_exception"],
+        "called_by": ["teste.except_caught"]
     }
 }
 
@@ -23,9 +18,9 @@ cfg_mock = {
 class TestCFG(unittest.TestCase):
     def test_flow_exception_handled(self):
         graph = CFG(cfg_mock,
-                    {'teste/teste.py:except_caller': ["ValueError"]})
+                    {'teste.except_caller': ["ValueError"]})
 
-        actual = graph.get_uncaught_exceptions('teste/teste.py:raise_exception',
+        actual = graph.get_uncaught_exceptions('teste.raise_exception',
                                                ['ValueError'])
         expected = {}
 
@@ -33,12 +28,22 @@ class TestCFG(unittest.TestCase):
 
     def test_flow_exception_unhandled(self):
         graph = CFG(cfg_mock,
-                    {'teste/teste.py:except_caller': ["ValueError"]})
+                    {'teste.except_caller': ["ValueError"]})
 
-        actual = graph.get_uncaught_exceptions('teste/teste.py:raise_exception',
+        actual = graph.get_uncaught_exceptions('teste.raise_exception',
                                                ['ValueError', 'NewException'])
 
-        expected = {'teste/teste.py:except_caller': ['NewException']}
+        expected = {'teste.except_caller': ['NewException']}
+
+        self.assertEqual(actual, expected)
+
+    def test_no_exception_handlers(self):
+        graph = CFG(cfg_mock,{})
+
+        actual = graph.get_uncaught_exceptions('teste.raise_exception',
+                                               ['ValueError', 'NewException'])
+
+        expected = {'teste.except_caller': ['ValueError', 'NewException']}
 
         self.assertEqual(actual, expected)
 

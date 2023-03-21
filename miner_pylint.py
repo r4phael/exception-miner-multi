@@ -178,8 +178,18 @@ def collect_parser(files, project_name):
     catch_nodes = {}
     raise_nodes = {}
     for func_name in call_graph.keys():
-        func_file, func_identifier = func_name.split(':')
-        query = df[(df['file'].str.contains(func_file) &
+        if not func_name.startswith('...'):
+            continue  # skip external libraries
+
+        names = func_name[3:].split('.')
+        if len(names) == 1:
+            continue  # skip built-in functions
+
+
+        module_path = '/'.join(names[0:-1])
+        func_identifier = names[-1]
+
+        query = df[(df['file'].str.contains(module_path) &
                     df['function'].str.fullmatch(func_identifier))]
 
         if query.empty:
@@ -202,8 +212,15 @@ def collect_parser(files, project_name):
             continue
 
         for f_full_identifier, uncaught_exceptions in cfg_uncaught_exceptions.items():
-            func_file, func_identifier = f_full_identifier.split(':')
-            query = df[(df['file'].str.contains(func_file) &
+            module_path, func_identifier = ('', '')
+            names = f_full_identifier.split('.')
+            if len(names) == 1:
+                func_identifier = names[0]
+            else:
+                module_path = names[0]
+                func_identifier = names[-1]
+
+            query = df[(df['file'].str.contains(module_path) &
                         df['function'].str.fullmatch(func_identifier))]
 
             if query.empty:
