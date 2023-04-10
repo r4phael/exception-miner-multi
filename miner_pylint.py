@@ -33,6 +33,18 @@ from miner_py_src.miner_py_utils import (
 logger = create_logger("exception_miner", "exception_miner.log")
 
 
+def fetch_gh(projects, dir = 'projects/py/'):
+    for index,row in projects.iterrows():
+        project = row['name']
+        try:
+            path = os.path.join(os.getcwd(), dir, project)
+            git_cmd = "git clone {}.git --recursive {}".format(row['repo'], path)
+            call(git_cmd, shell=True)
+            logger.warning("EH MINING: cloned project")
+        except Exception as e:
+            logger.warning(f"EH MINING: error cloing project {project} {e}")
+
+
 def fetch_repositories(project):
 
     # projects = pd.read_csv("projects.csv", sep=",")
@@ -51,8 +63,9 @@ def fetch_repositories(project):
         path = os.path.join(os.getcwd(), "projects/py", project)
         # git_cmd = "git clone {}.git --recursive {}".format(row["repo"], path)
         # call(git_cmd, shell=True)
+        logger.warning("Exception Miner: Before init git repo: {}".format(project))
         gr = Git(path)
-        logger.warning("Exception Miner: cloned project: {}".format(project))
+        logger.warning("Exception Miner: After init git repo: {}".format(project))
 
         files = [
             f
@@ -72,13 +85,10 @@ def fetch_repositories(project):
 def collect_smells(files, project):
     for file in tqdm(files):
         if pathlib.Path(file).suffix == ".py":
-            # print(file)
-            # print(os.path.basename(file))
             output_path = os.path.join(
                 "output/files/{}".format(project), os.path.basename(file)
             )
             try:
-                print(file)
                 command = "pylint {0} -v --output {1} --output-format json --disable=all --enable {2}".format(
                     file,
                     f"output/pytlint/{project}/{os.path.basename(file)}.json",
@@ -100,14 +110,14 @@ def collect_smells(files, project):
                         )
 
             except Exception as ex:
-                print(
+                tqdm.write(
                     "###### Error!!! in project {0} and file: {1}. exception: ##########".format(
                         project, file, str(ex)
                     )
                 )
 
 
-def __get_method_name(node) -> str | None:
+def __get_method_name(node): #-> str | None:
     for child in node.children:
         if child.type == 'identifier':
             return child.text.decode("utf-8")
@@ -125,7 +135,6 @@ def collect_parser(files, project_name):
     pbar = tqdm(files)
     func_defs: List[str] = []  # List[Node] = []
     for file_path in pbar:
-        print(f"File: {file_path}")
         pbar.set_description(f"Processing {str(file_path)[-40:].ljust(40)}")
 
         with open(file_path, "rb") as file:
@@ -172,6 +181,8 @@ def collect_parser(files, project_name):
     file_stats.num_files += len(files)
     file_stats.num_functions += len(func_defs)
 
+    logger.warning(f"before call graph...")
+
     call_graph = generate_cfg(project_name, os.path.normpath(
         f"projects/py/{project_name}"))
 
@@ -201,8 +212,9 @@ def collect_parser(files, project_name):
         if query.iloc[0]['str_except_identifiers']:
             catch_nodes[func_name] = query.iloc[0]['str_except_identifiers'].split(
                 ' ')
-
+            
     call_graph_cfg = CFG(call_graph, catch_nodes)
+    logger.warning(f"before parse the nodes from call graph...")
 
     for func_name, raise_types in raise_nodes.items():
         # func_file_raise, func_identifier_raise = func_name_raise.split(':')
@@ -242,13 +254,15 @@ def collect_parser(files, project_name):
 
     # func_defs_try_pass = [f for f in func_defs if is_try_except_pass(f)]
     os.makedirs("output/parser/", exist_ok=True)
-    # print(file_stats)
+    logger.warning(f"Before write to csv: {df.shape}")
     df.to_csv(f"output/parser/{project_name}_stats.csv", index=False)
 
 
 if __name__ == "__main__":
-    projects = ["flask"]  # ["django", "flask", "pytorch", "pandas"]
-    for project in projects:
-        files = fetch_repositories(project)
+    #projects = ["flask"]  # ["django", "flask", "pytorch", "pandas"]
+    projects = pd.read_csv("projects_py.csv", sep=",")
+    #fetch_gh(projects=projects)
+    for index,row in projects.iterrows():
+        files = fetch_repositories(row['name'])
         # collect_smells(files, project)
-        collect_parser(files, project)
+        collect_parser(files, row['name'])

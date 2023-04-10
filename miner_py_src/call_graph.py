@@ -52,11 +52,13 @@ class CFG():
         self.catch_nodes = catch_nodes
         self.graph = graph
 
-    def get_uncaught_exceptions(self, func_name: str, raise_types: list[str]) -> dict[str, list[str]]:
+    #def get_uncaught_exceptions(self, func_name: str, raise_types: list[str]) -> dict[str, list[str]]:
+    def get_uncaught_exceptions(self, func_name: str, raise_types: list) -> dict:
         if (func_name not in self.graph.keys()):
             raise CallGraphError(f"CFG: {func_name} not found")
 
-        export_data: dict[str, list[str]] = {}
+        #export_data: dict[str, list[str]] = {}
+        export_data = {}
 
         if len(self.graph[func_name]['called_by']) == 0:
             return export_data  # API call ??
