@@ -261,7 +261,7 @@ def collect_parser(files, project_name):
 if __name__ == "__main__":
     #projects = ["flask"]  # ["django", "flask", "pytorch", "pandas"]
     projects = pd.read_csv("projects_py.csv", sep=",")
-    #fetch_gh(projects=projects)
+    fetch_gh(projects=projects)
     for index,row in projects.iterrows():
         files = fetch_repositories(row['name'])
         # collect_smells(files, project)

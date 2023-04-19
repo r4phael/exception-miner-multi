@@ -1,5 +1,4 @@
 name,repo,source
-youtube-dl,https://github.com/ytdl-org/youtube-dl,github
 tensorflow-models,https://github.com/tensorflow/models,github
 flask,https://github.com/pallets/flask,github
 ansible,https://github.com/ansible/ansible,github
@@ -7,14 +6,15 @@ scikit-learn,https://github.com/scikit-learn/scikit-learn,github
 fastapi,https://github.com/tiangolo/fastapi,github
 manim,https://github.com/3b1b/manim,github
 requests,https://github.com/psf/requests,github
-scrapy,	https://github.com/scrapy/scrapy,github
 rich,https://github.com/textualize/rich,github
 sherlock,https://github.com/sherlock-project/sherlock,github
 openpilot,https://github.com/commaai/openpilot,github
-sentry,https://github.com/getsentry/sentry,github
 certbot,https://github.com/certbot/certbot,github
 black,https://github.com/psf/black,github
-localstack,	https://github.com/localstack/localstack,github
-mitmproxy,https://github.com/mitmproxy/mitmproxy,github
-ansible,https://github.com/ansible/ansible,github
-transformers,https://github.com/huggingface/transformers,github
+sqlmap,https://github.com/sqlmapproject/sqlmap,github
+algo,https://github.com/trailofbits/algo,github
+django-rest-framework,https://github.com/encode/django-rest-framework,github
+glances,https://github.com/nicolargo/glances,github
+pytorch-image-models,https://github.com/rwightman/pytorch-image-models,github
+mmdetection,https://github.com/open-mmlab/mmdetection,github
+celery,https://github.com/celery/celery,github
