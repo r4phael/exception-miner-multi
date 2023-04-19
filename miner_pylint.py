@@ -123,7 +123,7 @@ def __get_method_name(node): #-> str | None:
             return child.text.decode("utf-8")
 
 
-def collect_parser(files, project_name):
+def collect_parser(files, project_name, project_src_base):
 
     df = pd.DataFrame(
         columns=["file", "function", "func_body", "n_try_except", "n_try_pass", "n_finally",
@@ -183,7 +183,7 @@ def collect_parser(files, project_name):
 
     logger.warning(f"before call graph...")
 
-    call_graph = generate_cfg(project_name, os.path.normpath(
+    call_graph = generate_cfg(project_name, project_src_base, os.path.normpath(
         f"projects/py/{project_name}"))
 
     catch_nodes = {}
@@ -261,8 +261,8 @@ def collect_parser(files, project_name):
 if __name__ == "__main__":
     #projects = ["flask"]  # ["django", "flask", "pytorch", "pandas"]
     projects = pd.read_csv("projects_py.csv", sep=",")
-    #fetch_gh(projects=projects)
+    # fetch_gh(projects=projects)
     for index,row in projects.iterrows():
         files = fetch_repositories(row['name'])
         # collect_smells(files, project)
-        collect_parser(files, row['name'])
+        collect_parser(files, row['name'], row['base'])

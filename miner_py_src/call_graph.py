@@ -1,30 +1,60 @@
+import glob
+import json
 import os
 import subprocess
-import json
-import glob
+
+from tqdm import tqdm
+
 from miner_py_src.exceptions import CallGraphError
 
 
-def generate_cfg(project_name, project_folder):
+def generate_cfg(project_name, project_src_base, project_folder):
     current_path = os.getcwd()
     os.makedirs(
-        f'../output/call_graph/{project_name}', exist_ok=True)
+        f'{current_path}/output/call_graph/{project_name}', exist_ok=True)
     os.chdir(os.path.normpath(os.path.join(project_folder)))
 
-    proc = subprocess.run([
+    tqdm.write(f"Generating call graph for {project_name}...")
+
+    python_src_files = [os.path.abspath(x)
+                        for x in glob.iglob(f"./**/{project_src_base}/**/*.py", recursive=True)]
+    if len(python_src_files) == 0:
+        raise CallGraphError(f"No python files found in {project_src_base}")
+
+    tqdm.write(f'found {len(python_src_files)} files')
+    tqdm.write(f'Running PyCG...')
+
+    args = [
         'pycg',
-        *[os.path.abspath(x)
-          for x in glob.iglob(f"./**/{project_name}/**/*.py", recursive=True)],
-        *[os.path.abspath(x)
-          for x in glob.iglob(f"./{project_name}.py", recursive=False)],
-        '--package', project_name], stdout=subprocess.PIPE)
+        *python_src_files,
+        '--package', project_name,
+        '--max-iter', '1',
+        '--output', f'{current_path}/output/call_graph/{project_name}/call_graph.json']
+
+    proc = subprocess.run(args, stdout=subprocess.PIPE,
+                          stderr=subprocess.PIPE)
+
+    tqdm.write('PyCG finished')
 
     if (proc.returncode != 0):
-        raise CallGraphError(proc.stdout)
+        raise CallGraphError(proc.stderr)
+
+    try:
+        open(f'{current_path}/output/call_graph/{project_name}/stdout.txt', 'w').write(
+            proc.stdout.decode('utf-8'))
+    except IOError as e:
+        tqdm.write('Could not write stdout.txt', e)
+    
+    try:
+        open(f'{current_path}/output/call_graph/{project_name}/stderr.txt', 'w').write(
+            proc.stderr.decode('utf-8'))
+    except IOError as e:
+        tqdm.write('Could not write stderr.txt', e)
 
     os.chdir(current_path)
 
-    json_obj = json.loads(proc.stdout)
+    json_obj = json.load(
+        open(f'{current_path}/output/call_graph/{project_name}/call_graph.json'))
     call_graph = {}
     for func_name, calls in json_obj.items():
         if func_name not in call_graph.keys():
@@ -52,12 +82,12 @@ class CFG():
         self.catch_nodes = catch_nodes
         self.graph = graph
 
-    #def get_uncaught_exceptions(self, func_name: str, raise_types: list[str]) -> dict[str, list[str]]:
+    # def get_uncaught_exceptions(self, func_name: str, raise_types: list[str]) -> dict[str, list[str]]:
     def get_uncaught_exceptions(self, func_name: str, raise_types: list) -> dict:
         if (func_name not in self.graph.keys()):
             raise CallGraphError(f"CFG: {func_name} not found")
 
-        #export_data: dict[str, list[str]] = {}
+        # export_data: dict[str, list[str]] = {}
         export_data = {}
 
         if len(self.graph[func_name]['called_by']) == 0:
