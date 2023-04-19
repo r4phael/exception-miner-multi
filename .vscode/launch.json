@@ -27,7 +27,7 @@
             "request": "launch",
             "program": "miner_pylint.py",
             "console": "integratedTerminal",
-            "justMyCode": true,
+            "justMyCode": false,
         },
         {
             "name": "miner preprocess",

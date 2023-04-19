@@ -18,3 +18,5 @@ glances,https://github.com/nicolargo/glances,github
 pytorch-image-models,https://github.com/rwightman/pytorch-image-models,github
 mmdetection,https://github.com/open-mmlab/mmdetection,github
 celery,https://github.com/celery/celery,github
+youtube-dl,https://github.com/ytdl-org/youtube-dl,github
+cookiecutter,https://github.com/cookiecutter/cookiecutter,github
