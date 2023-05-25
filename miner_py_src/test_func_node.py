@@ -1,5 +1,6 @@
+import unittest
 from tree_sitter.binding import Node
-from tree_sitter_lang import QUERY_FUNCTION_DEF, QUERY_FUNCTION_IDENTIFIER, parser
+from .tree_sitter_lang import QUERY_FUNCTION_DEF, QUERY_FUNCTION_IDENTIFIER, parser
 #from miner_py_src.tree_sitter_lang import parser as tree_sitter_parser
 
 #from miner_py_utils import get_function_defs
@@ -64,7 +65,4 @@ func_else = parser.parse(
 
 
 if __name__ == '__main__':
-    body = get_function_body(func)
-    #captures = get_function_defs(tree)
-    #body = get_function_else(captures)
-    print(body)
+    unittest.main()

@@ -8,7 +8,7 @@ from tqdm import tqdm
 from miner_py_src.exceptions import CallGraphError
 
 
-def generate_cfg(project_name, project_src_base, project_folder):
+def generate_cfg(project_name, project_folder):
     current_path = os.getcwd()
     os.makedirs(
         f'{current_path}/output/call_graph/{project_name}', exist_ok=True)
@@ -17,12 +17,12 @@ def generate_cfg(project_name, project_src_base, project_folder):
     tqdm.write(f"Generating call graph for {project_name}...")
 
     python_src_files = [os.path.abspath(x)
-                        for x in glob.iglob(f"./**/{project_src_base}/**/*.py", recursive=True)]
+                        for x in glob.iglob(f"./**/*.py", recursive=True)]
     if len(python_src_files) == 0:
-        raise CallGraphError(f"No python files found in {project_src_base}")
+        raise CallGraphError("No python files found")
 
     tqdm.write(f'found {len(python_src_files)} files')
-    tqdm.write(f'Running PyCG...')
+    tqdm.write('Running PyCG...')
 
     args = [
         'pycg',
@@ -43,13 +43,15 @@ def generate_cfg(project_name, project_src_base, project_folder):
         open(f'{current_path}/output/call_graph/{project_name}/stdout.txt', 'w').write(
             proc.stdout.decode('utf-8'))
     except IOError as e:
-        tqdm.write('Could not write stdout.txt', e)
-    
+        tqdm.write('Could not write stdout.txt')
+        tqdm.write(e.strerror)
+
     try:
         open(f'{current_path}/output/call_graph/{project_name}/stderr.txt', 'w').write(
             proc.stderr.decode('utf-8'))
     except IOError as e:
-        tqdm.write('Could not write stderr.txt', e)
+        tqdm.write('Could not write stderr.txt')
+        tqdm.write(e.strerror)
 
     os.chdir(current_path)
 

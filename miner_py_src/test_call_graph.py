@@ -1,6 +1,6 @@
 import unittest
 
-from call_graph import CFG
+from .call_graph import CFG
 
 
 cfg_mock = {
