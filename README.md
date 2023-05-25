@@ -16,3 +16,9 @@ To reproduce the results, follow the instructions below.
 To run the unit tests, follow the instructions below.
 
 1. Run `python3 -m unittest`
+
+## Coverage report  
+To generate the coverage report, follow the instructions below.
+
+1. Run `coverage run -m unittest`
+2. Run `coverage report -m`
