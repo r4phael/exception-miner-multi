@@ -61,8 +61,3 @@ func_else = parser.parse(
         print('This is always executed')  
     """
 )
-
-
-
-if __name__ == '__main__':
-    unittest.main()

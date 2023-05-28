@@ -21,4 +21,4 @@ To run the unit tests, follow the instructions below.
 To generate the coverage report, follow the instructions below.
 
 1. Run `coverage run -m unittest`
-2. Run `coverage report -m`
+2. Run `coverage report --omit *test_*,*__init__*`

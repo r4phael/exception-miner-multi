@@ -564,6 +564,3 @@ class TestExceptBlocks(unittest.TestCase):
         expected = ['pass', 'click.secho(f"{traceback.format_exc()}")']
         
         self.assertEqual(actual, expected)
-
-if __name__ == '__main__':
-    unittest.main()
