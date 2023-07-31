@@ -33,16 +33,16 @@ from miner_py_src.miner_py_utils import (
 logger = create_logger("exception_miner", "exception_miner.log")
 
 
-def fetch_gh(projects, dir = 'projects/py/'):
-    for index,row in projects.iterrows():
-        project = row['name']
-        try:
-            path = os.path.join(os.getcwd(), dir, project)
-            git_cmd = "git clone {}.git --recursive {}".format(row['repo'], path)
-            call(git_cmd, shell=True)
-            logger.warning("EH MINING: cloned project")
-        except Exception as e:
-            logger.warning(f"EH MINING: error cloing project {project} {e}")
+def fetch_gh(project, repo, dir = 'projects/py/'):
+    #for index,row in projects.iterrows():
+    #project = row['name']
+    try:
+        path = os.path.join(os.getcwd(), dir, project)
+        git_cmd = "git clone {}.git --recursive {}".format(repo, path)
+        call(git_cmd, shell=True)
+        logger.warning("EH MINING: cloned project")
+    except Exception as e:
+        logger.warning(f"EH MINING: error cloing project {project} {e}")
 
 
 def fetch_repositories(project):
@@ -123,7 +123,7 @@ def __get_method_name(node): #-> str | None:
             return child.text.decode("utf-8")
 
 
-def collect_parser(files, project_name, project_src_base):
+def collect_parser(files, project_name, project_src_base=None):
 
     df = pd.DataFrame(
         columns=["file", "function", "func_body", "n_try_except", "n_try_pass", "n_finally",
@@ -183,8 +183,7 @@ def collect_parser(files, project_name, project_src_base):
 
     logger.warning(f"before call graph...")
 
-    call_graph = generate_cfg(project_name, project_src_base, os.path.normpath(
-        f"projects/py/{project_name}"))
+    call_graph = generate_cfg(project_name, files, os.path.normpath(f"projects/py/{project_name}"))
 
     catch_nodes = {}
     raise_nodes = {}
@@ -261,8 +260,9 @@ def collect_parser(files, project_name, project_src_base):
 if __name__ == "__main__":
     #projects = ["flask"]  # ["django", "flask", "pytorch", "pandas"]
     projects = pd.read_csv("projects_py.csv", sep=",")
-    fetch_gh(projects=projects)
     for index,row in projects.iterrows():
+        fetch_gh(project=row['name'], repo=row['repo'])
         files = fetch_repositories(row['name'])
         # collect_smells(files, project)
-        collect_parser(files, row['name'], row['base'])
+        #project_src_base = os.path.join(os.getcwd(), 'projects/py/' + row['name'])
+        collect_parser(files, row['name'])

@@ -16,10 +16,12 @@ def generate_cfg(project_name, project_src_base, project_folder):
 
     tqdm.write(f"Generating call graph for {project_name}...")
 
-    python_src_files = [os.path.abspath(x)
-                        for x in glob.iglob(f"./**/{project_src_base}/**/*.py", recursive=True)]
-    if len(python_src_files) == 0:
-        raise CallGraphError(f"No python files found in {project_src_base}")
+    # python_src_files = [os.path.abspath(x)
+    #                     for x in glob.iglob(f"./**/{project_src_base}/**/*.py", recursive=True)]
+    # if len(python_src_files) == 0:
+    #     raise CallGraphError(f"No python files found in {project_src_base}")
+
+    python_src_files = project_src_base
 
     tqdm.write(f'found {len(python_src_files)} files')
     tqdm.write(f'Running PyCG...')
@@ -31,8 +33,9 @@ def generate_cfg(project_name, project_src_base, project_folder):
         '--max-iter', '1',
         '--output', f'{current_path}/output/call_graph/{project_name}/call_graph.json']
 
+    #TODO: Paralelize? (Too Slow Here...)
     proc = subprocess.run(args, stdout=subprocess.PIPE,
-                          stderr=subprocess.PIPE)
+                        stderr=subprocess.PIPE)
 
     tqdm.write('PyCG finished')
 
