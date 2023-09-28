@@ -133,7 +133,7 @@ def collect_parser(files, project_name):
     file_stats.num_files += len(files)
     file_stats.num_functions += len(func_defs)
 
-    logger.warning("before call graph...")
+    logger.warning(f"before call graph...")
 
     call_graph = generate_cfg(project_name, os.path.normpath(
         f"projects/py/{project_name}"))
@@ -197,7 +197,7 @@ def collect_parser(files, project_name):
 
                 # append uncaught exception
                 df.iloc[idx, df.columns.get_loc(
-                    'str_uncaught_exceptions')] = (old_value + f" {func_name}:{uncaught_exception}").strip()
+                    'str_uncaught_exceptions')] = (old_value + f' {func_name}:{uncaught_exception}').strip()
 
     # func_defs_try_except = [
     #     f for f in func_defs if check_function_has_except_handler(f)
@@ -210,7 +210,7 @@ def collect_parser(files, project_name):
 
 
 if __name__ == "__main__":
-    projects = pd.read_csv("projects_mult.csv", sep=",")
+    projects = pd.read_csv("projects_py.csv", sep=",")
     fetch_gh(projects=projects)
     for index, row in projects.iterrows():
         files = fetch_repositories(row['name'])
