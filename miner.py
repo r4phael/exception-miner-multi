@@ -80,7 +80,8 @@ def collect_parser(files, project_name):
     df = pd.DataFrame(
         columns=["file", "function", "func_body", "n_try_except", "n_try_pass", "n_finally",
                  "n_generic_except", "n_raise", "n_captures_broad_raise", "n_captures_try_except_raise", "n_captures_misplaced_bare_raise",
-                 "n_try_else", "n_try_return", "str_except_identifiers", "str_raise_identifiers", "str_except_block", "str_uncaught_exceptions"]
+                 "n_try_else", "n_try_return", "str_except_identifiers", "str_raise_identifiers", "str_except_block", "str_uncaught_exceptions",
+                 "n_nested_try", "n_bare_except"]
     )
 
     file_stats = FileStats()
@@ -210,8 +211,7 @@ def collect_parser(files, project_name):
 
 
 if __name__ == "__main__":
-    projects = pd.read_csv("projects_py.csv", sep=",")
-    fetch_gh(projects=projects)
+    projects = pd.read_csv("projects_py_all.csv", sep=",")
     for index, row in projects.iterrows():
         files = fetch_repositories(row['name'])
         collect_parser(files, row['name'])
