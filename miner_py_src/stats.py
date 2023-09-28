@@ -14,7 +14,9 @@ from .miner_py_utils import (
     get_except_identifiers,
     get_raise_identifiers,
     get_except_clause,
-    get_except_block
+    get_except_block,
+    count_nested_try,
+    is_bare_except
 )
 from tqdm import tqdm
 from tree_sitter.binding import Node
@@ -69,7 +71,7 @@ class FileStats:
         Return a list of exception handling metrics in the following order: try-except clauses,
             try-pass, generic-except
         """
-        n_try_except, n_try_pass, n_generic_except = 0, 0, 0
+        n_try_except, n_try_pass, n_generic_except, n_bare_except = 0, 0, 0, 0
 
         captures_except = get_except_clause(func_def)
 
@@ -87,6 +89,8 @@ class FileStats:
 
         #captures_except_ident = QUERY_EXCEPT_IDENTIFIER.captures(func_def)       
 
+        n_nested_try = count_nested_try(func_def)
+
         n_finally = count_finally(func_def) 
     
         captures_except_ident = get_except_identifiers(func_def)
@@ -102,6 +106,8 @@ class FileStats:
             if is_generic_except(except_clause):
                 # tqdm.write(f"{file_path}:{func_def.id}")
                 n_generic_except += 1
+            if is_bare_except(except_clause):
+                n_bare_except += 1
 
         str_except_identifiers = " ".join(captures_except_ident)
         str_raise_identifiers = " ".join(captures_raise_ident)
@@ -121,6 +127,8 @@ class FileStats:
             "str_except_identifiers": str_except_identifiers,
             "str_raise_identifiers": str_raise_identifiers,
             "str_except_block": str_except_block,
+            "n_nested_try": n_nested_try,
+            "n_bare_except": n_bare_except
         }
 
 

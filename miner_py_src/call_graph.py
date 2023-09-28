@@ -16,19 +16,17 @@ def generate_cfg(project_name, project_folder):
 
     tqdm.write(f"Generating call graph for {project_name}...")
 
-<<<<<<< HEAD
     # python_src_files = [os.path.abspath(x)
     #                     for x in glob.iglob(f"./**/{project_src_base}/**/*.py", recursive=True)]
     # if len(python_src_files) == 0:
     #     raise CallGraphError(f"No python files found in {project_src_base}")
 
-    python_src_files = project_src_base
-=======
+    #python_src_files = project_src_base
+    
     python_src_files = [os.path.abspath(x)
                         for x in glob.iglob(f"./**/*.py", recursive=True)]
     if len(python_src_files) == 0:
         raise CallGraphError("No python files found")
->>>>>>> 5b8c7f144bdfbff57b449ad430956c216639c895
 
     tqdm.write(f'found {len(python_src_files)} files')
     tqdm.write('Running PyCG...')

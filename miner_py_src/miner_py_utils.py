@@ -142,13 +142,41 @@ def is_generic_except(except_clause: Node):
 
     captures = QUERY_EXCEPT_EXPRESSION.captures(except_clause)
     if len(captures) == 0:
-        return True
+        return False
 
     for c, _ in captures:
         identifiers = QUERY_FIND_IDENTIFIERS.captures(c)
         for ident, _ in identifiers:
             if ident.text == b"Exception":
                 return True
+
+    return False
+
+
+def check_function_has_generic_except(node: Node):
+    captures = QUERY_EXCEPT_CLAUSE.captures(node)
+    for c, _ in captures:
+        if is_generic_except(c):
+            return True
+
+    return False
+
+def is_bare_except(except_clause: Node):
+    if except_clause.type != "except_clause":
+        raise ExceptClauseExpectedException("Parameter must be except_clause")
+
+    captures = QUERY_EXCEPT_EXPRESSION.captures(except_clause)
+    if len(captures) == 0:
+        return True
+    
+    return False
+
+
+def check_function_has_bare_except(node: Node):
+    captures = QUERY_EXCEPT_CLAUSE.captures(node)
+    for c, _ in captures:
+        if is_bare_except(c):
+            return True
 
     return False
 
@@ -184,11 +212,19 @@ def statement_couter(node: Node):
 def check_function_has_nested_try(node: Node):
     captures = QUERY_TRY_STMT.captures(node)
     for c, _ in captures:
-        if len(QUERY_TRY_STMT.captures(c)) > 1:
+        if len(QUERY_TRY_STMT.captures(c)) > 2:
             return True
 
     return False
 
+def count_nested_try(node: Node):
+    n = 0
+    captures = QUERY_TRY_STMT.captures(node)
+    for c, _ in captures:
+        if len(QUERY_TRY_STMT.captures(c)) > 2:
+            n += 1
+
+    return n
 
 def count_try_else(node: Node):
     captures = QUERY_TRY_ELSE.captures(node)
