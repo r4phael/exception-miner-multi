@@ -30,7 +30,7 @@ def fetch_gh(projects, dir='projects/py/'):
             logger.warning(f"EH MINING: error cloing project {project} {e}")
 
 
-def fetch_repositories(project):
+def fetch_repositories(project)->list[str]:
 
     # projects = pd.read_csv("projects.csv", sep=",")
     # for index, row in projects.iterrows():
@@ -67,6 +67,7 @@ def fetch_repositories(project):
             "Exception Miner: error in project: {}, error: {}".format(
                 project, str(ex))
         )
+        return []
 
 
 def __get_method_name(node):  # -> str | None:
@@ -214,4 +215,7 @@ if __name__ == "__main__":
     projects = pd.read_csv("projects_py.csv", sep=",")
     for index, row in projects.iterrows():
         files = fetch_repositories(row['name'])
-        collect_parser(files, row['name'])
+        if len(files) > 0:
+            collect_parser(files, row['name'])
+        else:
+            continue
