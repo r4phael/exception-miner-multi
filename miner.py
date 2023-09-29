@@ -46,8 +46,8 @@ def fetch_repositories(project):
 
     try:
         path = os.path.join(os.getcwd(), "projects/py", project)
-        # git_cmd = "git clone {}.git --recursive {}".format(row["repo"], path)
-        # call(git_cmd, shell=True)
+        git_cmd = "git clone {}.git --recursive {}".format(row["repo"], path)
+        call(git_cmd, shell=True)
         logger.warning(
             "Exception Miner: Before init git repo: {}".format(project))
         gr = Git(path)
@@ -211,7 +211,7 @@ def collect_parser(files, project_name):
 
 
 if __name__ == "__main__":
-    projects = pd.read_csv("projects_py_all.csv", sep=",")
+    projects = pd.read_csv("projects_py.csv", sep=",")
     for index, row in projects.iterrows():
         files = fetch_repositories(row['name'])
         collect_parser(files, row['name'])

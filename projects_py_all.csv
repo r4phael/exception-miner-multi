@@ -1,7 +1,7 @@
 ,name,repo,source
+pallets,flask,https://github.com/pallets/flask,github
 ytdl-org,youtube-dl,https://github.com/ytdl-org/youtube-dl,github
 tensorflow,models,https://github.com/tensorflow/models,github
-pallets,flask,https://github.com/pallets/flask,github
 keras-team,keras,https://github.com/keras-team/keras,github
 ansible,ansible,https://github.com/ansible/ansible,github
 scikit-learn,scikit-learn,https://github.com/scikit-learn/scikit-learn,github
