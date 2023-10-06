@@ -22,9 +22,11 @@ def generate_cfg(project_name, project_folder):
     #     raise CallGraphError(f"No python files found in {project_src_base}")
 
     #python_src_files = project_src_base
-    
+
     python_src_files = [os.path.abspath(x)
-                        for x in glob.iglob(f"./**/*.py", recursive=True)]
+                        for x in glob.iglob("./**/*.py", recursive=True)
+                        if os.path.isfile(x)]
+
     if len(python_src_files) == 0:
         raise CallGraphError("No python files found")
 
@@ -38,14 +40,14 @@ def generate_cfg(project_name, project_folder):
         '--max-iter', '1',
         '--output', f'{current_path}/output/call_graph/{project_name}/call_graph.json']
 
-    #TODO: Paralelize? (Too Slow Here...)
+    # TODO: Paralelize? (Too Slow Here...)
     proc = subprocess.run(args, stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE)
+                          stderr=subprocess.PIPE)
 
     tqdm.write('PyCG finished')
 
     if (proc.returncode != 0):
-        raise CallGraphError(proc.stderr)
+        raise CallGraphError(proc.stderr.decode('utf-8'))
 
     try:
         open(f'{current_path}/output/call_graph/{project_name}/stdout.txt', 'w').write(
