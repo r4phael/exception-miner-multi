@@ -325,3 +325,23 @@ def has_misplaced_bare_raise(raise_stmt: Node):
 
     expected = ('except_clause', )
     return not current or current.type not in expected
+
+
+def count_bare_raise_inside_finally(node: Node):
+    bare_raise_statements = get_bare_raise(node)
+    counter = 0
+    for node, _ in bare_raise_statements:
+        if (has_bare_raise_finally(node)):
+            counter += 1
+    return counter
+
+
+def has_bare_raise_finally(raise_stmt: Node):
+    current = raise_stmt
+
+    ignores = ('finally_clause', 'function_definition')
+    while current and current.type not in ignores:
+        current = current.parent
+
+    expected = ('finally_clause')
+    return not current or current.type in expected

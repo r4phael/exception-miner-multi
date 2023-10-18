@@ -18,7 +18,8 @@ from miner_py_src.miner_py_utils import (Slices,
                                          get_except_block,
                                          get_function_defs,
                                          check_function_has_bare_except,
-                                         check_function_has_generic_except)
+                                         check_function_has_generic_except,
+                                         count_bare_raise_inside_finally)
 
 from miner_py_src.tree_sitter_lang import QUERY_FUNCTION_DEF, parser
 
@@ -653,7 +654,6 @@ class TestFunctionGenericException(unittest.TestCase):
 
         self.assertTrue(actual_check)
 
-
     def test_not_generic_exception(self):
         actual_check = check_function_has_generic_except(parser.parse(b"""
         def teste():
@@ -664,3 +664,34 @@ class TestFunctionGenericException(unittest.TestCase):
         """).root_node)
 
         self.assertFalse(actual_check)
+
+
+class TestFunctionHasBareRaiseFinally(unittest.TestCase):
+    def test_has_bare_inside_finally(self):
+        code = b'''
+        def foo(param):
+            result = 0
+            try:
+                print("foo")
+            except ValueError as e:
+                raise
+            else:
+                if param:
+                    raise ValueError()
+                else:
+                    raise
+            finally:
+                if param:
+                    raise # Noncompliant: This will fail in some context.
+                else:
+                    result = 1
+            return result
+        '''
+
+        captures = QUERY_FUNCTION_DEF.captures(parser.parse(code).root_node)
+        func_def, _ = captures[0]
+
+        actual = count_bare_raise_inside_finally(func_def)
+        expected = 1
+
+        self.assertEqual(actual, expected)
