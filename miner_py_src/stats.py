@@ -16,7 +16,8 @@ from .miner_py_utils import (
     get_except_clause,
     get_except_block,
     count_nested_try,
-    is_bare_except
+    is_bare_except,
+    count_bare_raise_inside_finally
 )
 from tqdm import tqdm
 from tree_sitter.binding import Node
@@ -81,6 +82,8 @@ class FileStats:
 
         n_captures_misplaced_bare_raise = count_misplaced_bare_raise(func_def)
 
+        n_bare_raise_finally = count_bare_raise_inside_finally(func_def)
+
         n_raise = count_raise(func_def)
 
         n_try_else = count_try_else(func_def)
@@ -128,7 +131,8 @@ class FileStats:
             "str_raise_identifiers": str_raise_identifiers,
             "str_except_block": str_except_block,
             "n_nested_try": n_nested_try,
-            "n_bare_except": n_bare_except
+            "n_bare_except": n_bare_except,
+            "n_bare_raise_finally" : n_bare_raise_finally
         }
 
 

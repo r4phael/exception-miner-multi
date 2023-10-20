@@ -45,7 +45,7 @@ def fetch_repositories(project)->list[str]:
         os.mkdir(f"output/pytlint/{project}")
 
     try:
-        path = os.path.join(os.getcwd(), "projects/py", project)
+        path = os.path.join(os.getcwd(), "projects/py", str(project))
         git_cmd = "git clone {}.git --recursive {}".format(row["repo"], path)
         call(git_cmd, shell=True)
         logger.warning(
@@ -79,10 +79,10 @@ def __get_method_name(node):  # -> str | None:
 def collect_parser(files, project_name):
 
     df = pd.DataFrame(
-        columns=["file", "function", "func_body", "n_try_except", "n_try_pass", "n_finally",
+        columns=["file", "function", "func_body", "str_uncaught_exceptions", "n_try_except", "n_try_pass", "n_finally",
                  "n_generic_except", "n_raise", "n_captures_broad_raise", "n_captures_try_except_raise", "n_captures_misplaced_bare_raise",
-                 "n_try_else", "n_try_return", "str_except_identifiers", "str_raise_identifiers", "str_except_block", "str_uncaught_exceptions",
-                 "n_nested_try", "n_bare_except"]
+                 "n_try_else", "n_try_return", "str_except_identifiers", "str_raise_identifiers", "str_except_block", "n_nested_try", 
+                 "n_bare_except", "n_bare_raise_finally"]
     )
 
     file_stats = FileStats()
@@ -123,8 +123,8 @@ def collect_parser(files, project_name):
                                 "file": file_path,
                                 "function": __get_method_name(child),
                                 "func_body": child.text.decode("utf-8"),
-                                **metrics,
-                                'str_uncaught_exceptions': ''
+                                'str_uncaught_exceptions': '',
+                                **metrics                                
                             }],
                             columns=df.columns,
                         ),
@@ -137,8 +137,11 @@ def collect_parser(files, project_name):
 
     logger.warning(f"before call graph...")
 
-    call_graph = generate_cfg(project_name, os.path.normpath(
-        f"projects/py/{project_name}"))
+    call_graph = generate_cfg(str(project_name), os.path.normpath(
+        f"projects/py/{str(project_name)}"))
+    
+    if call_graph is None:
+        call_graph = {}
 
     catch_nodes = {}
     raise_nodes = {}
