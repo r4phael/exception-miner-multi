@@ -8,7 +8,7 @@ from termcolor import colored
 from tqdm import tqdm
 from tree_sitter.binding import Node, Tree
 
-from .tree_sitter_lang import (
+from .tree_sitter_py import (
     QUERY_TRY_EXCEPT,
     QUERY_FUNCTION_DEF,
     QUERY_FUNCTION_DEF,

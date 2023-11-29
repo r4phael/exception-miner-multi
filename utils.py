@@ -57,3 +57,9 @@ def batch(iterable, n=1):
     for ndx in pbar:
         pbar.set_description(f"Global ... ")
         yield iterable[ndx:min(ndx + n, l)]
+
+dictionary = {
+    "typescript": "ts",
+    "python": "py",
+    "java": "java",
+}

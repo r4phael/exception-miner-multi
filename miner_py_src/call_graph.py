@@ -5,7 +5,7 @@ import subprocess
 
 from tqdm import tqdm
 
-from miner_py_src.exceptions import CallGraphError
+from miner_py_src.python.exceptions import CallGraphError
 
 
 def generate_cfg(project_name, project_folder):

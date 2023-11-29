@@ -4,7 +4,9 @@ __pycache__
 /projects
 /output
 /build
+/tree-sitter-java
 /tree-sitter-python
+/tree-sitter-typescript
 
 .idea
 *.iml

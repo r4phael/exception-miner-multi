@@ -1,4 +1,5 @@
 import os
+import sys
 import pathlib
 from subprocess import call
 from typing import List
@@ -8,11 +9,8 @@ from pydriller import Git
 from tqdm import tqdm
 
 from miner_py_src.call_graph import CFG, generate_cfg
-from miner_py_src.exceptions import FunctionDefNotFoundException
-from miner_py_src.miner_py_utils import get_function_defs
-from miner_py_src.stats import FileStats
-from miner_py_src.tree_sitter_lang import parser as tree_sitter_parser
-from utils import create_logger
+
+from utils import create_logger, dictionary
 
 logger = create_logger("exception_miner", "exception_miner.log")
 
@@ -30,7 +28,7 @@ def fetch_gh(projects, dir='projects/py/'):
             logger.warning(f"EH MINING: error cloing project {project} {e}")
 
 
-def fetch_repositories(project)->list[str]:
+def fetch_repositories(project, language)->list[str]:
 
     # projects = pd.read_csv("projects.csv", sep=",")
     # for index, row in projects.iterrows():
@@ -45,7 +43,7 @@ def fetch_repositories(project)->list[str]:
         os.mkdir(f"output/pytlint/{project}")
 
     try:
-        path = os.path.join(os.getcwd(), "projects/py", str(project))
+        path = os.path.join(os.getcwd(), f"projects/{language}", str(project))
         git_cmd = "git clone {}.git --recursive {}".format(row["repo"], path)
         call(git_cmd, shell=True)
         logger.warning(
@@ -57,7 +55,7 @@ def fetch_repositories(project)->list[str]:
         files = [
             f
             for f in gr.files()
-            if pathlib.Path(rf"{f}").suffix == ".py" and not os.path.islink(f)
+            if pathlib.Path(rf"{f}").suffix == f".{language}" and not os.path.islink(f)
         ]
 
         return files
@@ -76,13 +74,20 @@ def __get_method_name(node):  # -> str | None:
             return child.text.decode("utf-8")
 
 
-def collect_parser(files, project_name):
-
-    df = pd.DataFrame(
-        columns=["file", "function", "func_body", "str_uncaught_exceptions", "n_try_except", "n_try_pass", "n_finally",
+def collect_parser(files, project_name, language):
+    columnsLanguage = {
+        "py": ["file", "function", "func_body", "str_uncaught_exceptions", "n_try_except", "n_try_pass", "n_finally",
                  "n_generic_except", "n_raise", "n_captures_broad_raise", "n_captures_try_except_raise", "n_captures_misplaced_bare_raise",
                  "n_try_else", "n_try_return", "str_except_identifiers", "str_raise_identifiers", "str_except_block", "n_nested_try", 
-                 "n_bare_except", "n_bare_raise_finally"]
+                 "n_bare_except", "n_bare_raise_finally"],
+        "ts": ["file", "function", "func_body", "str_uncaught_exceptions", "n_try_catch", "n_finally", "str_catch_identifiers", "str_catch_block",
+               "n_generic_catch", "n_useless_catch", "n_count_empty_catch", "n_count_catch_reassigning_identifier", "str_throw_identifiers",
+               "n_throw", "n_generic_throw", "n_non_generic_throw", "n_not_recommended_throw", "n_captures_try_catch_throw", "n_try_return",
+               "n_nested_try"]
+    }
+
+    df = pd.DataFrame(
+        columns=columnsLanguage[language]
     )
 
     file_stats = FileStats()
@@ -137,8 +142,9 @@ def collect_parser(files, project_name):
 
     logger.warning(f"before call graph...")
 
+    #!!!!!!!!!!!!!!!!!!
     call_graph = generate_cfg(str(project_name), os.path.normpath(
-        f"projects/py/{str(project_name)}"))
+        f"projects/{language}/{str(project_name)}"))
     
     if call_graph is None:
         call_graph = {}
@@ -168,7 +174,7 @@ def collect_parser(files, project_name):
         if query.iloc[0]['str_except_identifiers']:
             catch_nodes[func_name] = query.iloc[0]['str_except_identifiers'].split(
                 ' ')
-
+     #!!!!!!!!!!!!!!!!!!
     call_graph_cfg = CFG(call_graph, catch_nodes)
     logger.warning(f"before parse the nodes from call graph...")
 
@@ -213,12 +219,33 @@ def collect_parser(files, project_name):
     logger.warning(f"Before write to csv: {df.shape}")
     df.to_csv(f"output/parser/{project_name}_stats.csv", index=False)
 
+def check_language(language):
+    try:
+        result = dictionary[language]
+        return result
+    except:
+        raise Exception(f"This language isn't in our dataset. Please, select any of these: {', '.join(list(dictionary.keys()))}")
+
 
 if __name__ == "__main__":
+    language = check_language(sys.argv[0]) if len(sys.argv) > 0 else "python"
     projects = pd.read_csv("projects_py.csv", sep=",")
+    match language:
+        case "python":
+            from miner_py_src.python.tree_sitter_py import parser as tree_sitter_parser
+            from miner_py_src.python.miner_py_utils import get_function_defs
+            from miner_py_src.python.exceptions import FunctionDefNotFoundException
+            from miner_py_src.python.stats import FileStats
+        case "typescript":
+            from miner_py_src.typescript.tree_sitter_ts import parser as tree_sitter_parser
+            from miner_py_src.typescript.miner_ts_utils import get_function_defs
+            from miner_py_src.typescript.exceptions import FunctionDefNotFoundException
+            from miner_py_src.typescript.stats import FileStats
+        case "java":
+            pass
     for index, row in projects.iterrows():
-        files = fetch_repositories(row['name'])
+        files = fetch_repositories(row['name'], language)
         if len(files) > 0:
-            collect_parser(files, row['name'])
+            collect_parser(files, row['name'], language)
         else:
             continue

@@ -1,6 +1,6 @@
 import unittest
 
-from miner_py_src.miner_py_utils import (Slices,
+from miner_py_src.python.miner_py_utils import (Slices,
                                          check_function_has_except_handler,
                                          check_function_has_nested_try,
                                          count_nested_try,
@@ -21,7 +21,7 @@ from miner_py_src.miner_py_utils import (Slices,
                                          check_function_has_generic_except,
                                          count_bare_raise_inside_finally)
 
-from miner_py_src.tree_sitter_lang import QUERY_FUNCTION_DEF, parser
+from miner_py_src.python.tree_sitter_py import QUERY_FUNCTION_DEF, parser
 
 
 class TestCheckFunctionHasExceptionHandler(unittest.TestCase):
@@ -66,27 +66,6 @@ def teste():
         print(a)
     except:
         pass""").root_node)
-        self.assertFalse(actual_check)
-
-    def test_nested_try_two_indentation_levels(self):
-        actual_check = check_function_has_nested_try(parser.parse(b"""
-def teste_nested_try_except():
-    a = 1
-    b = 2
-    b = a
-    print(b)
-    try:
-        c = b
-        print(c)
-        if True:
-            try:
-                print('nested')
-            except Exception:
-                print('falhou')
-    except Exception:
-        print('falhou')
-
-    print(b)""").root_node)
         self.assertFalse(actual_check)
 
     def test_nested_try_two_indentation_levels(self):
