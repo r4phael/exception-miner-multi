@@ -20,7 +20,7 @@ from .miner_py_utils import (
     count_bare_raise_inside_finally
 )
 from tqdm import tqdm
-from tree_sitter.binding import Node
+from tree_sitter._binding import Node
 from .miner_py_utils import QUERY_TRY_STMT, QUERY_EXCEPT_CLAUSE
 
 

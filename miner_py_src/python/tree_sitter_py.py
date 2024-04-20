@@ -1,21 +1,9 @@
-from tree_sitter import Language, Parser
-from tree_sitter.binding import Query
+from tree_sitter._binding import Query
+from tree_sitter_languages import get_language, get_parser
 
-if __name__ == '__main__':
-    root = '../'
-else:
-    root = ''
+PY_LANGUAGE = get_language('python')
 
-Language.build_library(
-    root + 'build/my-languages.so',
-    [
-        root + 'tree-sitter-python'
-    ]
-)
-
-PY_LANGUAGE = Language(root + 'build/my-languages.so', 'python')
-
-parser = Parser()
+parser = get_parser('python')
 parser.set_language(PY_LANGUAGE)
 
 QUERY_FUNCTION_DEF: Query = PY_LANGUAGE.query(

@@ -6,7 +6,7 @@ from typing import List
 import pandas as pd
 from termcolor import colored
 from tqdm import tqdm
-from tree_sitter.binding import Node, Tree
+from tree_sitter._binding import Node, Tree
 
 from .tree_sitter_py import (
     QUERY_TRY_EXCEPT,
