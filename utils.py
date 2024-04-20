@@ -59,7 +59,16 @@ def batch(iterable, n=1):
         yield iterable[ndx:min(ndx + n, l)]
 
 dictionary = {
-    "typescript": "ts",
-    "python": "py",
-    "java": "java",
+    "python": {
+        "main": "py",
+        "additional": []
+    },
+    "typescript": {
+        "main": "ts",
+        "additional": ["tsx"]
+    },
+    "java": {
+        "main": "java",
+        "additional": []
+    },
 }
