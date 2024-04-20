@@ -1,6 +1,6 @@
 import unittest
 
-from ..miner_py_src.typescript.miner_ts_utils import (Slices,
+from miner_py_src.typescript.miner_ts_utils import (Slices,
                                          check_function_has_catch_handler,
                                          check_function_has_nested_try,
                                          count_nested_try,
@@ -19,6 +19,8 @@ from ..miner_py_src.typescript.miner_ts_utils import (Slices,
                                          count_empty_catch,
                                          count_useless_catch,
                                          count_catch_reassigning_identifier,
+                                         n_wrapped_catch,
+                                         get_function_def
                                          )
 
 from miner_py_src.typescript.tree_sitter_ts import QUERY_FUNCTION_DEF, parser
@@ -147,19 +149,6 @@ function test() {
 }''').root_node)
 
         self.assertEqual(actual_count, 1)
-##Por que?
-#     def test_not_utf8_function(self):
-
-#         code = r'''
-# def not_utf8():
-#     """
-#     multiline string
-#     """
-#     print(f"\x1b]8;id={self._link_id};{self._link}\x1b\\{rendered}\x1b]8;;\x1b\\")'''
-
-#         actual_count = count_lines_of_function_body(
-#             parser.parse(bytes(code, 'utf-8')).root_node)
-#         self.assertEqual(actual_count, 4)
 
 class TestGetTrySlices(unittest.TestCase):
     def test_get_try_slices(self):
@@ -343,12 +332,20 @@ function test() {
         throw ({ 'value': 'Error' })
     } else if ( 4 < 2 ) {
         throw new Error('third')
+    } else if (5 > 10) {
+        throw null
+    } else if (6 > 10) {
+        throw undefined
+    }  else if (7 > 10) {
+        throw 10
+    } else if (8 > 10) {
+        throw DivisionByZero('error message')
     }
     throw 'error'
 }'''
         node = parser.parse(code).root_node
         result = count_not_recommended_throw(node)
-        expected = 3
+        expected = 5
         self.assertEqual(result, expected)
     
     def test_count_non_generic_throw(self):
@@ -360,12 +357,14 @@ function test() {
         throw "second"
     } else if ( 4 < 2 ) {
         throw new Error('third')
+    } else if ( 5 < 2 ) {
+        throw MyError('fourth')
     }
     throw 'error'
 }'''
         funcNode = parser.parse(code).root_node
         result = count_non_generic_throw(funcNode)
-        expected = 0
+        expected = 1
         self.assertEqual(result, expected)
 
     def test_count_non_generic_throw_match(self):
@@ -480,3 +479,69 @@ function test() {
         expected = ["console.log('erro')"]
         
         self.assertEqual(actual, expected)
+
+    def test_wrapped_catch(self):
+        n_wrapped = n_wrapped_catch(parser.parse(b'''
+function badCatchExamplethree() {
+	try {
+        doSomething()
+    } catch(value: any) {
+    	console.log('aaaa')
+	}
+	try {
+    	doSomething()
+    } catch (error: any) {
+    	throw ValueError(2)
+		throw new Error('Error in doSomething', { cause: error })
+    }
+    try {
+    	doSomething()
+    } catch (ox: any) {
+    	console.log('ox')
+    } 
+  }
+}''').root_node)
+        expected = 2
+        self.assertEqual(n_wrapped, expected)
+    
+class TestArrowFuncions(unittest.TestCase):
+    def test_arrow_funtion_defs(self):
+        arrow_function = get_function_def(parser.parse(b'''
+const value = () => {
+   try {
+      doSomething()
+   } catch(err: any) {
+      console.log('value')
+   }
+}''').root_node)
+        n_wrapped = n_wrapped_catch(arrow_function)
+        expected = 1
+        self.assertEqual(n_wrapped, expected)
+
+    def test_get_arrow_funcs(self):
+        catchs = get_function_defs(parser.parse(b'''
+function teste () {
+    try {
+      doSomething()
+    } catch(ix: any) {
+        console.error('ops')                                
+    }
+}
+                                                       
+const value = () => {
+   try {
+      doSomething()
+   } catch(err: any) {
+      console.log('value')
+   }
+}'''))
+        n_wrapped_catchs = 0
+        for c in catchs:
+            n = n_wrapped_catch(c)
+            n_wrapped_catchs += n
+        expected = 2
+        self.assertEqual(n_wrapped_catchs, expected)
+
+
+        
+        
