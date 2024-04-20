@@ -8,7 +8,6 @@ import pandas as pd
 from pydriller import Git
 from tqdm import tqdm
 
-# from miner_py_src.call_graph import CFG, generate_cfg
 from utils import create_logger, dictionary
 import json
 
