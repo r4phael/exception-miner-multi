@@ -18,9 +18,10 @@ from .miner_ts_utils import (
     get_throw_identifiers,
     get_catch_clause,
     get_catch_block,
+    n_wrapped_catch
 )
 from tqdm import tqdm
-from tree_sitter.binding import Node
+from tree_sitter._binding import Node
 from .miner_ts_utils import QUERY_TRY_STMT, QUERY_CATCH_CLAUSE
 
 
@@ -86,7 +87,9 @@ class FileStats:
 
         n_nested_try = count_nested_try(func_def)
 
-        n_finally = count_finally(func_def) 
+        n_finally = count_finally(func_def)
+
+        n_wrapped_catch_ = n_wrapped_catch(func_def)
     
         captures_catch_ids = get_catch_identifiers(func_def)
 
@@ -110,6 +113,7 @@ class FileStats:
             "str_catch_block": str_catch_block,
             "n_generic_catch": n_generic_catch,
             "n_useless_catch": n_useless_catch,
+            "n_wrapped_catch":n_wrapped_catch_,
             "n_count_empty_catch": n_count_empty_catch,
             "n_count_catch_reassigning_identifier": n_count_catch_reassigning_identifier,
             "str_throw_identifiers": str_throw_identifiers,
