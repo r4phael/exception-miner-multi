@@ -3,27 +3,27 @@
  */
 {
     //CHECK
-    function badCatchExample() {
+    function uselessCatch() {
         try {
             const a = JSON.parse("value")
         } catch (error) {
             //useless catch
             /**
-             * Somente relançar o erro
+             * only rethrow error
              */
             throw error
         }
     }
     
     //CHECK
-    function badCatchExampleTwo() {
+    function ignoreError() {
         try {
             const a = JSON.parse("value")
         } catch (error) {}
     }
 
     //CHECK
-    function badCatchExamplethree() {
+    function reassignErrorObj() {
         try {
             const a = JSON.parse("value")
         } catch (error) {
@@ -40,7 +40,7 @@
 
 {
     //CHECK
-    function badThrowExample() {
+    function throwLiteral() {
         const a = Math.random()
         if(a > 0.5) {
             //no throw literal
@@ -49,7 +49,7 @@
     }
     
     //CHECK
-    function badThrowExampleTwo() {
+    function throwLiteral2() {
         const a = Math.random()
         if(a > 0.5) {
             throw ({ 'value': 'Error' })
@@ -57,9 +57,10 @@
     }
     
     //CHECK
-    function badThrowExampleThree() {
+    function throwFunction() {
         const a = Math.random()
         if(a > 0.5) {
+            //lose the error stack
             throw Error("Error")
         }
     }
@@ -68,6 +69,7 @@
     function genericThrowExample() {
         const a = Math.random()
         if(a > 0.5) {
+            //Generic error obj
             throw new Error("Error")
         }
     }
