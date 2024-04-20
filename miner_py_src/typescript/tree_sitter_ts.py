@@ -1,25 +1,25 @@
-from tree_sitter import Language, Parser
-from tree_sitter.binding import Query
+from tree_sitter._binding import Query
 
-if __name__ == '__main__':
-    root = '../'
-else:
-    root = ''
+from tree_sitter_languages import get_language, get_parser
 
-Language.build_library(
-    root + 'build/my-languages.so',
-    [
-        root + 'tree-sitter-typescript'
-    ]
-)
 
-TS_LANGUAGE = Language(root + 'build/my-languages.so', 'typescript')
+TS_LANGUAGE = get_language('typescript')
 
-parser = Parser()
+parser = get_parser('typescript')
 parser.set_language(TS_LANGUAGE)
 
 QUERY_FUNCTION_DEF: Query = TS_LANGUAGE.query(
     "(function_declaration) @function.def")
+
+QUERY_ARROW_FUNCTION_DEF: Query = TS_LANGUAGE.query(
+    """(variable_declarator 
+            (identifier)?
+            (arrow_function
+                body: (statement_block)
+            )
+        ) @function.def
+    """
+)
 
 QUERY_FUNCTION_IDENTIFIER: Query = TS_LANGUAGE.query(
     """(function_declaration (identifier) @function.def)""")

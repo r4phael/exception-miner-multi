@@ -6,11 +6,12 @@ from typing import List
 import pandas as pd
 from termcolor import colored
 from tqdm import tqdm
-from tree_sitter.binding import Node, Tree
+from tree_sitter._binding import Node, Tree
 
 from .tree_sitter_ts import (
     QUERY_TRY_CATCH,
     QUERY_FUNCTION_DEF,
+    QUERY_ARROW_FUNCTION_DEF,
     QUERY_FUNCTION_IDENTIFIER,
     QUERY_TRY_STMT,
     QUERY_CATCH_CLAUSE,
@@ -90,13 +91,19 @@ def count_lines_of_function_body(f: Node, filename=None):
 
 def get_function_def(node: Node) -> Node:
     captures = QUERY_FUNCTION_DEF.captures(node)
-    if len(captures) == 0:
+    arrow_captures = QUERY_ARROW_FUNCTION_DEF.captures(node)
+    if len(captures) > 0:
+        return captures[0][0]
+    elif len(arrow_captures) > 0:
+        return arrow_captures[0][0]
+    else:
         raise FunctionDefNotFoundException("Not found")
-    return captures[0][0]
 
 def get_function_defs(tree: Tree) -> List[Node]:
     captures = QUERY_FUNCTION_DEF.captures(tree.root_node)
-    return [c for c, _ in captures]
+    arrow_captures = QUERY_ARROW_FUNCTION_DEF.captures(tree.root_node)
+    result = captures + arrow_captures
+    return [c for c, _ in result]
 
 def get_function_literal(node: Node):
     captures = QUERY_FUNCTION_IDENTIFIER.captures(node)
@@ -269,7 +276,7 @@ def count_not_recommended_throw(node: Node):
     captures = QUERY_THROW_STATEMENT_CHILDREN.captures(node)
     count = 0
     for c, _ in captures:
-        if c.type != 'new_expression':
+        if c.type != 'new_expression' and c.type != 'call_expression':
             count += 1
     return count
 
@@ -294,6 +301,24 @@ def count_try_catch_throw(node: Node):
             generic_catch_throw_number += 1
     return generic_catch_throw_number
 
+
+def n_wrapped_catch(node: Node):
+    captures = QUERY_CATCH_IDENTIFIER_BODY.captures(node)
+    if len(captures) == 0:
+        return 0
+    count = 0
+    catch_id = ''
+    for c, t in captures:
+        if t == 'catch.identifier':
+            catch_id = c.text.decode('utf-8')
+        if t == 'catch.body':
+            is_used = False
+            body_ids = QUERY_FIND_IDENTIFIERS.captures(c)
+            for body_id, _ in body_ids:
+                is_used = is_used or body_id.text.decode('utf-8') == catch_id
+            if not is_used:
+                count += 1
+    return count
 
 # def count_misplaced_bare_raise(node: Node):
 #     bare_raise_statements = get_bare_raise(node)
