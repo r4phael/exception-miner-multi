@@ -17,13 +17,24 @@ To reproduce the results, follow the instructions below.
 
 1. Back to root directory
 2. Run `pip install -r requirements.txt` 
-3. Run `python miner.py`
 
-### Choosing a language
-1. Run `python miner.py <language>`
-current languages: python, typescript
-default language: python
+## Usage
 
+1. Run the script with the command `python miner.py -in <input_path> -o <output_dir> -lang <language>`
+
+### Parameters
+
+- `<input_path>`: Path to the CSV file that contains the name, repo, and source. This is a required parameter.
+- `<output_dir>`: Path to the output directory. If not provided, the default is `output`.
+- `<language>`: Programming language of the input file(s). Available options are python, typescript. If not provided, the default is `python`.
+
+### Example
+
+To run the script on a CSV file named `input.csv`, output the results to a directory named `results`, and specify the language as `python`, you would use the following command:
+
+```bash
+python miner.py -in input.csv -o results -lang python
+```
 ## Unit tests
 To run the unit tests, follow the instructions below.
 
