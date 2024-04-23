@@ -148,7 +148,7 @@ def collect_parser(files, project_name, language, args):
         #!!!!!!!!!!!!!!!!!!
         mainExtension = language["main"]
         call_graph = generate_cfg(str(project_name), os.path.normpath(
-            f"projects/{mainExtension}/{str(project_name)}"))
+            f"projects/{mainExtension}/{str(project_name)}"), args.output_dir)
         
         if call_graph is None:
             call_graph = {}
