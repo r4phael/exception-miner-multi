@@ -3,7 +3,7 @@ import sys
 import pathlib
 from subprocess import call
 from typing import List
-
+from cli import cmdline_args
 import pandas as pd
 from pydriller import Git
 from tqdm import tqdm
@@ -30,7 +30,7 @@ def file_match(suffix, language):
     extension = suffix[1:]
     return extension == language['main'] or extension in language['additional']
 
-def fetch_repositories(project, language)->list[str]:
+def fetch_repositories(project, language, args)->list[str]:
 
     # projects = pd.read_csv("projects.csv", sep=",")
     # for index, row in projects.iterrows():
@@ -40,11 +40,11 @@ def fetch_repositories(project, language)->list[str]:
 
     mainExtension = language["main"]
 
-    if not os.path.exists("output/pytlint"):
-        os.makedirs("output/pytlint")
+    if not os.path.exists(f"{args.output_dir}/pytlint"):
+        os.makedirs(f"{args.output_dir}/pytlint")
 
-    if not os.path.exists(f"output/pytlint/{project}"):
-        os.mkdir(f"output/pytlint/{project}")
+    if not os.path.exists(f"{args.output_dir}/pytlint/{project}"):
+        os.mkdir(f"{args.output_dir}/pytlint/{project}")
 
     try:
         path = os.path.join(os.getcwd(), f"projects/{mainExtension}", str(project))
@@ -76,7 +76,7 @@ def __get_method_name(node):  # -> str | None:
         if child.type == 'identifier' or child.type == 'object_pattern':
             return child.text.decode("utf-8")
 
-def collect_parser(files, project_name, language):
+def collect_parser(files, project_name, language, args):
     columnsLanguage = {
         "py": ["file", "function", "func_body", "str_uncaught_exceptions", "n_try_except", "n_try_pass", "n_finally",
                  "n_generic_except", "n_raise", "n_captures_broad_raise", "n_captures_try_except_raise", "n_captures_misplaced_bare_raise",
@@ -148,7 +148,7 @@ def collect_parser(files, project_name, language):
         #!!!!!!!!!!!!!!!!!!
         mainExtension = language["main"]
         call_graph = generate_cfg(str(project_name), os.path.normpath(
-            f"projects/{mainExtension}/{str(project_name)}"))
+            f"projects/{mainExtension}/{str(project_name)}"), args.output_dir)
         
         if call_graph is None:
             call_graph = {}
@@ -220,9 +220,9 @@ def collect_parser(files, project_name, language):
     # ]  # and not check_function_has_nested_try(f)    ]
 
     # func_defs_try_pass = [f for f in func_defs if is_try_except_pass(f)]
-    os.makedirs(f"output/parser/{language['main']}", exist_ok=True)
+    os.makedirs(f"{args.output_dir}/parser/{language['main']}", exist_ok=True)
     logger.warning(f"Before write to csv: {df.shape}")
-    df.to_csv(f"output/parser/{language['main']}/{project_name}_stats.csv", index=False)
+    df.to_csv(f"{args.output_dir}/parser/{language['main']}/{project_name}_stats.csv", index=False)
 
 def check_language(language):
     try:
@@ -232,7 +232,8 @@ def check_language(language):
         raise Exception(f"This language isn't in our dataset. Please, select any of these: {', '.join(list(dictionary.keys()))}")
 
 if __name__ == "__main__":
-    language = check_language(sys.argv[1]) if len(sys.argv) > 0 else  check_language("python")
+    args = cmdline_args()
+    language = check_language(args.language)
     projects = pd.DataFrame([])
     match language['main']:
         case "py":
@@ -241,18 +242,19 @@ if __name__ == "__main__":
             from miner_py_src.python.exceptions import FunctionDefNotFoundException
             from miner_py_src.python.stats import FileStats
             from miner_py_src.python.call_graph import CFG, generate_cfg
-            projects = pd.read_csv("projects_py.csv", sep=",")
+            projects = pd.read_csv(args.input_path, sep=",")
         case "ts":
             from miner_py_src.typescript.tree_sitter_ts import parser as tree_sitter_parser
             from miner_py_src.typescript.miner_ts_utils import get_function_defs
             from miner_py_src.typescript.exceptions import FunctionDefNotFoundException
             from miner_py_src.typescript.stats import FileStats
-            projects = pd.read_csv("projects_ts.csv", sep=",")
+            projects = pd.read_csv(args.input_path, sep=",")
         case "java":
             pass
     for index, row in projects.iterrows():
-        files = fetch_repositories(row['name'], language)
+        files = fetch_repositories(row['name'], language, args)
         if len(files) > 0:
-            collect_parser(files, row['name'], language)
+            collect_parser(files, row['name'], language, args)
         else:
             continue
+

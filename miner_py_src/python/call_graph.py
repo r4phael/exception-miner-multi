@@ -7,11 +7,10 @@ from tqdm import tqdm
 
 from miner_py_src.python.exceptions import CallGraphError
 
-
-def generate_cfg(project_name, project_folder):
+def generate_cfg(project_name, project_folder, output_dir):
     current_path = os.getcwd()
     os.makedirs(
-        f'{current_path}/output/call_graph/{project_name}', exist_ok=True)
+        f'{current_path}/{output_dir}/call_graph/{project_name}', exist_ok=True)
     os.chdir(os.path.normpath(os.path.join(project_folder)))
 
     tqdm.write(f"Generating call graph for {project_name}...")
@@ -38,7 +37,7 @@ def generate_cfg(project_name, project_folder):
         *python_src_files[0:4],
         '--package', project_name,
         '--max-iter', '1',
-        '--output', f'{current_path}/output/call_graph/{project_name}/call_graph.json']
+        '--output', f'{current_path}/{output_dir}/call_graph/{project_name}/call_graph.json']
 
     # TODO: Paralelize? (Too Slow Here...)
     proc = subprocess.run(args, stdout=subprocess.PIPE,
@@ -50,14 +49,14 @@ def generate_cfg(project_name, project_folder):
         raise CallGraphError(proc.stderr.decode('utf-8'))
 
     try:
-        open(f'{current_path}/output/call_graph/{project_name}/stdout.txt', 'w').write(
+        open(f'{current_path}/{output_dir}/call_graph/{project_name}/stdout.txt', 'w').write(
             proc.stdout.decode('utf-8'))
     except IOError as e:
         tqdm.write('Could not write stdout.txt')
         tqdm.write(e.strerror)
 
     try:
-        open(f'{current_path}/output/call_graph/{project_name}/stderr.txt', 'w').write(
+        open(f'{current_path}/{output_dir}/call_graph/{project_name}/stderr.txt', 'w').write(
             proc.stderr.decode('utf-8'))
     except IOError as e:
         tqdm.write('Could not write stderr.txt')
@@ -66,7 +65,7 @@ def generate_cfg(project_name, project_folder):
     os.chdir(current_path)
 
     json_obj = json.load(
-        open(f'{current_path}/output/call_graph/{project_name}/call_graph.json'))
+        open(f'{current_path}/{output_dir}/call_graph/{project_name}/call_graph.json'))
     call_graph = {}
     for func_name, calls in json_obj.items():
         if func_name not in call_graph.keys():
