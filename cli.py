@@ -40,8 +40,8 @@ def cmdline_args():
 
     return parsed_args
 
-if sys.version_info < (3, 10, 14):
-    sys.stderr.write("You need Python 3.10.14 or later to run this script\n")
+if sys.version_info < (3, 10):
+    sys.stderr.write("You need Python 3.10 or later to run this script\n")
     sys.exit(1)
 
 args = cmdline_args()

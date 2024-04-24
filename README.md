@@ -4,13 +4,12 @@ This repository includes the source code and data for our paper "An Empirical St
 
 ## Requirements
 
-- Python 3.6+
+- Python 3.10+
 
 ## Virtualenv (Windows)
 1. Run `py -3.10 -m venv {virtualenv name}`
 2. Go to Scripts repository in `{virtualenv name}/Scripts`
 3. Run `activate`
-4. 
 
 ## Build
 To reproduce the results, follow the instructions below.
