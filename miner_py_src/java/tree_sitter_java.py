@@ -69,7 +69,7 @@ QUERY_INSTANCEOF_EXPRESSION: Query = JAVA_LANGUAGE.query(
 QUERY_CATCH_EXPRESSION: Query = JAVA_LANGUAGE.query(
     """(catch_clause (_) @catch.expression)""")
 
-QUERY_FIND_IDENTIFIERS: Query = JAVA_LANGUAGE.query(
+QUERY_FIND_IDENTIFIERS_THROW: Query = JAVA_LANGUAGE.query(
    """(type_identifier) @throw.identifier """)
 
 QUERY_THROW_STATEMENT: Query = JAVA_LANGUAGE.query(
@@ -106,10 +106,4 @@ QUERY_CATCH_ASSIGNMENT_EXPRESSION_LEFT: Query = JAVA_LANGUAGE.query(
     )""")
 
 
-QUERY_THROWABLE_GETCAUSE: Query = JAVA_LANGUAGE.query(
-    """(method_invocation 
-        (identifier) @method.identifier
-        (argument_list)
-    )"""
-)
 

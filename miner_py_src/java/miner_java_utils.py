@@ -10,6 +10,7 @@ from tree_sitter import Node, Tree
 
 from .tree_sitter_java import (
     QUERY_CATCH_ASSIGNMENT_EXPRESSION_LEFT,
+    QUERY_FIND_IDENTIFIERS_THROW,
     QUERY_INSTANCEOF_EXPRESSION,
     QUERY_METHOD_DEF,
     QUERY_METHOD_IDENTIFIER,
@@ -17,7 +18,6 @@ from .tree_sitter_java import (
     QUERY_EXPRESSION_STATEMENT,
     QUERY_METHOD_INVOCATION,
     QUERY_RETURN,
-    QUERY_THROWABLE_GETCAUSE,
     QUERY_TRY_STMT,
     QUERY_TRY_CATCH,
     QUERY_CATCH_CLAUSE,
@@ -270,7 +270,7 @@ def count_untyped_throw(node: Node):
             QUERY_THROW_STATEMENT_IDENTIFIER.captures(node))))
 
 def is_generic_throw(node: Node, catchParameter=None):
-    identifiers = QUERY_FIND_IDENTIFIERS.captures(node)
+    identifiers = QUERY_FIND_IDENTIFIERS_THROW.captures(node)
     for identifier, _ in identifiers:
         text = identifier.text.decode('utf-8')
         if catchParameter is not None:
@@ -341,7 +341,7 @@ def check_throw_within_finally(node: Node):
 def check_throwing_null_pointer_exception(node: Node):
     captures = QUERY_THROW_STATEMENT.captures(node)
     for capture, _ in captures:
-        identifiers = QUERY_FIND_IDENTIFIERS.captures(capture)
+        identifiers = QUERY_FIND_IDENTIFIERS_THROW.captures(capture)
         for identifier, _ in identifiers:
             if identifier.text.decode('utf-8') == 'NullPointerException':
                 return True
