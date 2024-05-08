@@ -85,7 +85,12 @@ def collect_parser(files, project_name, language, args):
         "ts": ["file", "function", "func_body", "n_try_catch", "n_finally", "str_catch_identifiers", "str_catch_block",
                "n_generic_catch", "n_useless_catch", "n_count_empty_catch", "n_count_catch_reassigning_identifier", "n_wrapped_catch", "str_throw_identifiers",
                "n_throw", "n_generic_throw", "n_non_generic_throw", "n_not_recommended_throw", "n_captures_try_catch_throw", "n_try_return",
-               "n_nested_try"]
+               "n_nested_try"],
+        "java": ["file", "function", "func_body", "n_try_catch", "n_finally", "str_catch_identifiers", "str_catch_block",
+             "n_generic_catch", "n_useless_catch", "n_wrapped_catch", "n_count_empty_catch", "n_count_catch_reassigning_identifier", "str_throw_identifiers",
+             "n_throw", "n_generic_throw", "n_non_generic_throw", "n_captures_try_catch_throw", "n_try_return", "n_nested_try",
+             "throw_within_finally", "throwing_null_pointer_exception", "generic_exception_handling", "instanceof_in_catch", 
+             "n_instanceof_in_catch", "destructive_wrapping", "cause_in_catch", "n_cout_get_cause_in_catch"]
     }
 
     df = pd.DataFrame(
@@ -250,6 +255,11 @@ if __name__ == "__main__":
             from miner_py_src.typescript.stats import FileStats
             projects = pd.read_csv(args.input_path, sep=",")
         case "java":
+            from miner_py_src.java.tree_sitter_java import parser as tree_sitter_parser
+            from miner_py_src.java.miner_java_utils import get_function_defs
+            from miner_py_src.java.exception import FunctionDefNotFoundException
+            from miner_py_src.java.stats import FileStats
+            projects = pd.read_csv(args.input_path, sep=",")
             pass
     for index, row in projects.iterrows():
         files = fetch_repositories(row['name'], language, args)

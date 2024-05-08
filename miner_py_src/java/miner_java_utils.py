@@ -1,20 +1,14 @@
-import time
 from collections import namedtuple
 from enum import Enum
-from typing import List 
 
-import pandas as pd
-from termcolor import colored
 from tqdm import tqdm
 from tree_sitter import Node, Tree
 
 from .tree_sitter_java import (
     QUERY_CATCH_ASSIGNMENT_EXPRESSION_LEFT,
     QUERY_FIND_IDENTIFIERS_THROW,
-    QUERY_INSTANCEOF_EXPRESSION,
     QUERY_METHOD_DEF,
     QUERY_METHOD_IDENTIFIER,
-    QUERY_METHOD_BODY,
     QUERY_EXPRESSION_STATEMENT,
     QUERY_METHOD_INVOCATION,
     QUERY_RETURN,
@@ -24,7 +18,6 @@ from .tree_sitter_java import (
     QUERY_CATCH_IDENTIFIER_BODY,
     QUERY_CATCH_BLOCK,
     QUERY_CATCH_STATEMENTS,
-    QUERY_CATCH_EXPRESSION,
     QUERY_FIND_IDENTIFIERS,
     QUERY_THROW_STATEMENT,
     QUERY_THROW_STATEMENT_IDENTIFIER,
@@ -128,7 +121,8 @@ def count_empty_catch(node: Node):
 def check_useless_throw_in_catch(node: Node, catchParam):
     if len(node.children)>3: 
         return False
-    if node.children[1].type == 'throw_statement': 
+    #if node.children[1].type == 'throw_statement': 
+    if len(node.children) > 1 and node.children[1].type == 'throw_statement':
         captures = QUERY_FIND_IDENTIFIERS.captures(node.children[1])
         for c, _ in captures: 
             if c.text.decode('utf-8') == catchParam: 
