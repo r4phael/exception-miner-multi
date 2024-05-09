@@ -11,8 +11,7 @@ def cmdline_args():
     # Create a string with all available languages
     available_languages = ', '.join(dictionary.keys())
     language_help = f'Programming language of the input file(s). Available options: {available_languages}'
-    args.add_argument('-lang', '--language', default='python', metavar='', help=language_help)
-
+    args.add_argument('-lang', '--language', nargs='+', default=['python'], metavar='', help=language_help)
     parsed_args = args.parse_args()
 
     # Check if the input file exists
@@ -33,10 +32,11 @@ def cmdline_args():
         os.makedirs(parsed_args.output_dir)
 
     # Check if the provided language is supported
-    if parsed_args.language not in dictionary.keys():
-        sys.stderr.write(f"The provided language is not supported: {parsed_args.language}\n")
-        sys.stderr.write("Supported languages are: " + ", ".join(dictionary.keys()) + "\n")
-        sys.exit(1)
+    for language in parsed_args.language:
+        if language not in dictionary.keys():
+            sys.stderr.write(f"The provided language is not supported: {language}\n")
+            sys.stderr.write("Supported languages are: " + ", ".join(dictionary.keys()) + "\n")
+            sys.exit(1)
 
     return parsed_args
 
