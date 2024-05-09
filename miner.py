@@ -11,8 +11,38 @@ from tqdm import tqdm
 from utils import create_logger, dictionary
 import json
 
+from miner_py_src.java import tree_sitter_java, exception, miner_java_utils
+from miner_py_src.java import stats as java_stats
+from miner_py_src.python import tree_sitter_py, exceptions, miner_py_utils
+from miner_py_src.python import stats as python_stats
+from miner_py_src.python.call_graph import CFG, generate_cfg
+from miner_py_src.typescript import tree_sitter_ts, exceptions, miner_ts_utils
+from miner_py_src.typescript import stats as ts_stats
+from multiprocessing import Process
+
 logger = create_logger("exception_miner", "exception_miner.log")
 
+
+MODULES = {
+    "py": {
+        "tree_sitter": tree_sitter_py,
+        "stats": python_stats,
+        "exception": exceptions,
+        "utils": miner_py_utils,
+    },
+    "ts": {
+        "tree_sitter": tree_sitter_ts,
+        "stats": ts_stats,
+        "exception": exceptions,
+        "utils": miner_ts_utils
+    },
+    "java": {
+        "tree_sitter": tree_sitter_java,
+        "stats": java_stats,
+        "exception": exception,
+        "utils": miner_java_utils
+    }
+}
 
 def fetch_gh(projects, dir='projects/py/'):
     for index, row in projects.iterrows():
@@ -30,7 +60,7 @@ def file_match(suffix, language):
     extension = suffix[1:]
     return extension == language['main'] or extension in language['additional']
 
-def fetch_repositories(project, language, args)->list[str]:
+def fetch_repositories(project, repo, language, args)->list[str]:
 
     # projects = pd.read_csv("projects.csv", sep=",")
     # for index, row in projects.iterrows():
@@ -48,7 +78,7 @@ def fetch_repositories(project, language, args)->list[str]:
 
     try:
         path = os.path.join(os.getcwd(), f"projects/{mainExtension}", str(project))
-        git_cmd = "git clone {}.git --recursive {}".format(row["repo"], path)
+        git_cmd = "git clone {}.git --recursive {}".format(repo, path)
         call(git_cmd, shell=True)
         logger.warning(
             "Exception Miner: Before init git repo: {}".format(project))
@@ -112,7 +142,7 @@ def collect_parser(files, project_name, language, args):
                 )
                 continue
         try:
-            tree = tree_sitter_parser.parse(content)
+            tree = parser.parse(content)
         except SyntaxError as ex:
             tqdm.write(
                 f"###### SyntaxError Error!!! file: {file_path}.\n{str(ex)}")
@@ -229,42 +259,41 @@ def collect_parser(files, project_name, language, args):
     logger.warning(f"Before write to csv: {df.shape}")
     df.to_csv(f"{args.output_dir}/parser/{language['main']}/{project_name}_stats.csv", index=False)
 
-def check_language(language):
-    try:
-        result = dictionary[language]
-        return result
-    except:
-        raise Exception(f"This language isn't in our dataset. Please, select any of these: {', '.join(list(dictionary.keys()))}")
+def check_language(languages):
+    results=[]
+    for language in languages:
+        try:
+            result = dictionary[language]
+            results.append(result)
+        except:
+            raise Exception(f"This language isn't in our dataset. Please, select any of these: {', '.join(list(dictionary.keys()))}")
+    return results
+
+def process_language(language, args):
+    global parser, get_function_defs, FunctionDefNotFoundException, FileStats
+    module = MODULES[language['main']]
+
+    parser = module["tree_sitter"].parser
+    get_function_defs = module["utils"].get_function_defs
+    FunctionDefNotFoundException = module["exception"].FunctionDefNotFoundException
+    FileStats = module["stats"].FileStats
+
+    projects = pd.read_csv(args.input_path, sep=",")
+    for index, row in projects.iterrows():
+        files = fetch_repositories(row['name'],row['repo'], language, args)
+        if len(files) > 0:
+            collect_parser(files, row['name'], language, args)
 
 if __name__ == "__main__":
     args = cmdline_args()
-    language = check_language(args.language)
-    projects = pd.DataFrame([])
-    match language['main']:
-        case "py":
-            from miner_py_src.python.tree_sitter_py import parser as tree_sitter_parser
-            from miner_py_src.python.miner_py_utils import get_function_defs
-            from miner_py_src.python.exceptions import FunctionDefNotFoundException
-            from miner_py_src.python.stats import FileStats
-            from miner_py_src.python.call_graph import CFG, generate_cfg
-            projects = pd.read_csv(args.input_path, sep=",")
-        case "ts":
-            from miner_py_src.typescript.tree_sitter_ts import parser as tree_sitter_parser
-            from miner_py_src.typescript.miner_ts_utils import get_function_defs
-            from miner_py_src.typescript.exceptions import FunctionDefNotFoundException
-            from miner_py_src.typescript.stats import FileStats
-            projects = pd.read_csv(args.input_path, sep=",")
-        case "java":
-            from miner_py_src.java.tree_sitter_java import parser as tree_sitter_parser
-            from miner_py_src.java.miner_java_utils import get_function_defs
-            from miner_py_src.java.exception import FunctionDefNotFoundException
-            from miner_py_src.java.stats import FileStats
-            projects = pd.read_csv(args.input_path, sep=",")
-            pass
-    for index, row in projects.iterrows():
-        files = fetch_repositories(row['name'], language, args)
-        if len(files) > 0:
-            collect_parser(files, row['name'], language, args)
-        else:
-            continue
+    languages = check_language(args.language)
+
+    processes = []
+    for language in languages:
+        p = Process(target=process_language, args=(language, args))
+        p.start()
+        processes.append(p)
+
+    for p in processes:
+        p.join()
 
