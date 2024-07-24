@@ -17,10 +17,12 @@ from .miner_py_utils import (
     get_except_block,
     count_nested_try,
     is_bare_except,
-    count_bare_raise_inside_finally
+    count_bare_raise_inside_finally,
+    get_code_without_try_except,
+    get_try_statements_vector
 )
 from tqdm import tqdm
-from tree_sitter._binding import Node
+from tree_sitter._binding import Node, Tree
 from .miner_py_utils import QUERY_TRY_STMT, QUERY_EXCEPT_CLAUSE
 
 
@@ -67,7 +69,7 @@ class FileStats:
             f"# generic exception per function definition: {(len(self.func_generic_except) / max(self.num_functions, 1)) * 100:.2f}%\n"
         )
 
-    def get_metrics(self, func_def: Node):
+    def get_metrics(self, func_def: Node, tree: None):
         """
         Return a list of exception handling metrics in the following order: try-except clauses,
             try-pass, generic-except
@@ -101,6 +103,10 @@ class FileStats:
         captures_raise_ident = get_raise_identifiers(func_def)
 
         captures_except_block = list(map(lambda x: x[0].text.decode('utf-8'), get_except_block(func_def)))
+
+        captures_code_without_try_except = get_code_without_try_except(func_def, tree)
+
+        captures_try_stmt_vec = get_try_statements_vector(func_def)
         
         for except_clause, _ in captures_except:
             n_try_except += 1
@@ -132,7 +138,8 @@ class FileStats:
             "str_except_block": str_except_block,
             "n_nested_try": n_nested_try,
             "n_bare_except": n_bare_except,
-            "n_bare_raise_finally" : n_bare_raise_finally
+            "n_bare_raise_finally" : n_bare_raise_finally,
+            "str_code_without_try_except": captures_code_without_try_except
         }
 
 

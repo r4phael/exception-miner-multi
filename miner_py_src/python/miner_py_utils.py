@@ -1,10 +1,11 @@
-import time
+import io
+import token
+import tokenize
 from collections import namedtuple
 from enum import Enum
-from typing import List
+from typing import List, Union
+from .exceptions import TreeSitterNodeException
 
-import pandas as pd
-from termcolor import colored
 from tqdm import tqdm
 from tree_sitter._binding import Node, Tree
 
@@ -345,3 +346,74 @@ def has_bare_raise_finally(raise_stmt: Node):
 
     expected = ('finally_clause')
     return not current or current.type in expected
+
+def get_code_without_try_except(node: Node, tree) -> Union[None, str]:
+    # Traverse the function body and remove try-except blocks
+    if check_function_has_try(node):
+        captures = QUERY_TRY_EXCEPT.captures(node)
+        new_code_lines = []
+        source_code = tree.text
+        
+        current_position = node.start_byte
+        
+        for capture in captures:
+            node_try_except = capture[0]            
+            # Capture try body block
+            if capture[1] == 'try.stmt':
+                # Add code before the try block
+                new_code_lines.append(source_code[current_position:node_try_except.start_byte])
+                # Add the content of the try block, excluding the `try:` keyword
+                # try_block = node_try_except.text.decode('utf8').strip()[4:-1]
+                for child in node_try_except.children:
+                    if child.type == 'block':
+                        new_code_lines.append(child.text)
+                    current_position = node_try_except.end_byte
+            # Capture except clause block
+            # elif capture[1] == 'except.clause':
+            #     new_code_lines.append(source_code[current_position:start_byte])
+            #     current_position = end_byte
+
+            break
+
+        # Add the remaining part of the code
+        new_code_lines.append(source_code[current_position:node.end_byte])
+        decoded_lines = [line.decode('utf-8') for line in new_code_lines]
+    
+        # Join and return the new code
+        return ''.join(decoded_lines)
+    
+def get_try_statements_vector(node: Node, vector = []):
+    assert node is not None
+
+    if not isinstance(node.text, bytes):
+        raise TreeSitterNodeException("node.text is not bytes")
+
+    if not check_function_has_try(node):
+        return [0] * len(node.children) # No try statements, all statements are 0
+
+    try:
+        try_slice = get_try_slices(node)
+    except TryNotFoundException:
+        return [0] * len(node.children)
+    
+    function_start = node.start_point[0] - 1
+
+    if try_slice is not None:
+        for child in node.children:
+            if child.is_named:
+                try_reached = (child.start_point[0] - function_start) >= try_slice.try_block_start
+                #except_reached = 
+                #finnaly_reached = 
+                vector.append(1 if try_reached else 0)
+
+                
+
+                #if len(try_slice.handlers) != 0 and token_info.start[0] >= try_slice.handlers[0][0]:
+
+    # for child in node.children:
+    #     if child.is_named:
+    #         for start, end in slices:
+    #             enclosed_by_try = any(start <= child.start_byte < end for start, end in slices)
+    #         vector.append(1 if enclosed_by_try else 0)
+    
+    return vector

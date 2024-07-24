@@ -14,40 +14,18 @@
             "justMyCode": true,
         },
         {
-            "name": "miner_py",
+            "name": "Python: CLI",
             "type": "python",
             "request": "launch",
-            "program": "miner_py.py",
-            "console": "integratedTerminal",
-            "justMyCode": true,
-        },
-        {
-            "name": "miner_pylint",
-            "type": "python",
-            "request": "launch",
-            "program": "miner_pylint.py",
-            "console": "integratedTerminal",
-            "justMyCode": false,
-        },
-        {
-            "name": "miner preprocess",
-            "type": "python",
-            "request": "launch",
-            "program": "miner_py.py",
+            "program": "miner.py",
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [
-                "--mode",
-                "preprocess"
+                "-in",
+                "projects_py.csv",
+                "-lang",
+                "python" 
             ]
-        },
-        {
-            "name": "miner demo",
-            "type": "python",
-            "request": "launch",
-            "program": "miner_py_demo_file.py",
-            "console": "integratedTerminal",
-            "justMyCode": true,
         }
     ]
 }
