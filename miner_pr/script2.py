@@ -7,6 +7,7 @@ from pydriller import Repository
 from pydriller.domain.commit import ModificationType
 import ast
 import re
+import argparse
 
 def commit_exists(repo_path, commit_hash):
     try:
@@ -124,6 +125,7 @@ def find_associated_tests_in_pr(modifications, modified_filename):
 
 def analyze_commits(commits_data):
     results = []
+    seen_functions = set()
     for pr_number, commits in commits_data.items():
         for commit in commits:
             for mod in commit['modifications']:
@@ -131,6 +133,10 @@ def analyze_commits(commits_data):
                 after_funcs = parse_functions(mod['source_code'])
                 matched_funcs = match_functions(before_funcs, after_funcs)
                 for before, after in matched_funcs:
+                    function_signature = (mod['filename'], after['name'], commit['hash'])
+                    if function_signature in seen_functions:
+                        continue
+                    seen_functions.add(function_signature)
                     if not has_try_except(ast.parse(before['body'])) and has_try_except(ast.parse(after['body'])):
                         associated_tests = find_associated_tests_in_pr(commit['modifications'], mod['filename'])
                         results.append({
@@ -159,20 +165,30 @@ def save_results_to_csv(results, filename):
             writer.writerow(result)
 
 if __name__ == "__main__":
-    repo = "pallets/flask"
-    token = "your_github_token"
-    repo_path = "/home/tales/Documents/code/flask"
+    parser = argparse.ArgumentParser(description="Analyze GitHub PRs and commits.")
+    parser.add_argument("--repo", required=True, help="GitHub repository in the format 'owner/repo'.")
+    parser.add_argument("--token", required=True, help="GitHub API token.")
+    parser.add_argument("--repo_path", required=True, help="Local path to the GitHub repository.")
+    args = parser.parse_args()
+
+    repo = args.repo
+    token = args.token
+    repo_path = args.repo_path
+
+    current_dir = os.getcwd()
+    prs_file = os.path.join(current_dir, "merged_prs.json")
+    commits_file = os.path.join(current_dir, "all_commits.json")
+    commits_data_file = os.path.join(current_dir, "commits_data.json")
+    results_file = os.path.join(current_dir, "exception_mechanisms.csv")
 
     os.system(f"git -C {repo_path} fetch --unshallow")
 
-    prs_file = "/home/tales/Documents/code/exception-miner-multi/miner_pr/merged_prs.json"
     if os.path.exists(prs_file):
         merged_prs = load_prs_from_file(prs_file)
     else:
         merged_prs = get_merged_prs(repo, token)
         save_prs_to_file(merged_prs, prs_file)
     
-    commits_file = "/home/tales/Documents/code/exception-miner-multi/miner_pr/all_commits.json"
     if os.path.exists(commits_file):
         all_commits = load_prs_from_file(commits_file)
     else:
@@ -186,7 +202,7 @@ if __name__ == "__main__":
     commits_data = {}
     for pr_number, commit_hashes in all_commits.items():
         commits_data[pr_number] = mine_commits(repo_path, commit_hashes)
-    save_prs_to_file(commits_data, "/home/tales/Documents/code/exception-miner-multi/miner_pr/commits_data.json")
+    save_prs_to_file(commits_data, commits_data_file)
 
     results = analyze_commits(commits_data)
-    save_results_to_csv(results, "/home/tales/Documents/code/exception-miner-multi/miner_pr/exception_mechanisms.csv")
+    save_results_to_csv(results, results_file)
