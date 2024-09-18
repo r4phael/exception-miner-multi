@@ -10,17 +10,17 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# projects = ["django", "flask", "pytorch", "pandas"]
+# Define the projects
 projects = ["flask"]
-dfs=[]
+dfs = []
 
-def prompt_default(function, binary_anwsers=True):
+# Define prompt functions for task1
+def prompt_default(function, binary_answers=True):
     premise = "You will be provided with a python code snippet."
     code_text = function
     instructions = (
         f"Based on the code above, I need you to identify if this code need an exception handling mechanism."
-        #+ f"If yes, please return only yes and the code in completion. If not return only the word 'no'."
-        + f"Please return only with the word yes or 'no'."
+        + f"Please return only with the word 'yes' or 'no'."
     )
     final_text = [
         premise,
@@ -32,7 +32,6 @@ def prompt_default(function, binary_anwsers=True):
     final_text = "\n".join(final_text)
     return final_text
 
-
 def prompt_1_shot(function):
     example_code = "result = 1 / n"
     example_result = "yes\ntry:\n    result = 1 / n\nexcept ZeroDivisionError:\n    print('Division by zero is not allowed')"
@@ -42,7 +41,7 @@ def prompt_1_shot(function):
         f"Output: {example_result}\n\n"
         "Now, analyze the following code:\n"
         f"<code>\n{function}\n</code>\n"
-        "Does this code need an exception handling mechanism? If yes, please return only 'yes' and the code in completion. If not, return only 'no'."
+        "Does this code need an exception handling mechanism? If yes, please return only the word 'yes'. If not, return only with the word 'no'."
     )
     return final_text
 
@@ -69,7 +68,7 @@ def prompt_few_shot(function, num_shots=2):
     prompt += (
         "Now, analyze the following code:\n"
         f"<code>\n{function}\n</code>\n"
-        "Does this code need an exception handling mechanism? If yes, please return only 'yes' and the code in completion. If not, return only 'no'."
+        "Does this code need an exception handling mechanism? If yes, please return only the word 'yes'. If not, return only with the word 'no'."
     )
     return prompt
 
@@ -79,9 +78,81 @@ def prompt_cot(function):
         f"<code>\n{function}\n</code>\n"
         "First, check if there are any operations that might raise exceptions (e.g., file handling, division, type conversion).\n"
         "Then, consider if these operations are currently protected by try-except blocks. If they are not, an exception handling mechanism may be needed.\n"
-        "Finally, provide your answer as 'yes' with the modified code or 'no' if no if an exception handling mechanism is required."
+        "Finally, provide your answer only with the word 'yes if an exception handling mechanism is not required.'. If not, return only with the word 'no'."
     )
     return prompt
+
+def prompt_task2_default(function):
+    prompt = (
+        "You will be provided with a Python code snippet that currently lacks exception handling.\n"
+        "Your task is to add appropriate try-except blocks to the code where necessary.\n"
+        "Return the modified code, keeping the format consistent. \n\n"
+        f"<code>\n{function}\n</code>\n"
+        "The output must include: the code inside the try-except block and the except block that handles the exception.\n"
+    )
+    return prompt
+
+
+def prompt_task2_1_shot(function):
+    example_code = "result = 1 / n"
+    example_output = (
+        "try:\n"
+        "    result = 1 / n\n"
+        "except ZeroDivisionError:\n"
+        "    print('Division by zero is not allowed')"
+    )
+    
+    prompt = (
+        "Here is an example of a Python code snippet and its corresponding exception handling:\n"
+        f"<code>\n{example_code}\n</code>\n"
+        f"Modified code with exception handling:\n{example_output}\n\n"
+        "Now, for the following code, add the required try-except block:\n"
+        f"<code>\n{function}\n</code>\n"
+        "The output must include: the code inside the try-except block and the except block that handles the exception.\n"
+    )
+    return prompt
+
+
+def prompt_task2_few_shot(function, num_shots=2):
+    examples = [
+        (
+            "open('file.txt', 'r')",
+            "try:\n    open('file.txt', 'r')\nexcept FileNotFoundError:\n    print('File not found')"
+        ),
+        (
+            "value = int('not_a_number')",
+            "try:\n    value = int('not_a_number')\nexcept ValueError:\n    print('Invalid integer')"
+        ),
+        (
+            "result = 1 / 0",
+            "try:\n    result = 1 / 0\nexcept ZeroDivisionError:\n    print('Division by zero is not allowed')"
+        ),
+    ]
+
+    prompt = "Here are examples of Python code snippets and how to add exception handling:\n"
+    for example_code, example_output in examples[:num_shots]:
+        prompt += f"<code>\n{example_code}\n</code>\nModified code:\n{example_output}\n\n"
+
+    prompt += (
+        "Now, add the required try-except block to the following code:\n"
+        f"<code>\n{function}\n</code>\n"
+        "The output must include: the code inside the try-except block and the except block that handles the exception.\n"
+    )
+    return prompt
+
+
+def prompt_task2_cot(function):
+    prompt = (
+        "Analyze the following code step-by-step to determine where exception handling is necessary:\n"
+        f"<code>\n{function}\n</code>\n"
+        "1. Identify the parts of the code where exceptions might occur (e.g., file handling, type conversion, division).\n"
+        "2. Determine the specific exceptions that can be raised by these operations.\n"
+        "3. Add a try-except block to handle the exceptions appropriately.\n"
+        "4. Return the modified code with the correct exception handling.\n"
+        "The output must include: the code inside the try-except block and the except block that handles the exception.\n"
+    )
+    return prompt
+
 
 def collect_df(functions=[]):
     for project in projects:
@@ -95,60 +166,80 @@ def collect_df(functions=[]):
     #     functions.append(fun)
 
     pos_samples = df[df['n_try_except'] == 1]
-    neg_samples = df[df['n_try_except'] == 0].sample(n=len(pos_samples), random_state=42)
+    #neg_samples = df[df['n_try_except'] == 0].sample(n=len(pos_samples), random_state=42)
     
+    return pos_samples
     # concat and shuffle the DataFrame rows
     #return pd.concat([pos_samples, neg_samples], ignore_index=True).sample(frac=1)
-    return pd.concat([pos_samples.sample(n=1), neg_samples.sample(n=1)], ignore_index=True)
+    # To test:
+    # return pd.concat([pos_samples.sample(n=1), neg_samples.sample(n=1)], ignore_index=True)
 
 def call_llama(prompt, model_name="codellama"):
-
     headers = {
         "Content-Type": "application/json"
     }
 
     data = {
-            "model": model_name,
-            "prompt" :prompt,
-            "stream": False
-            }
+        "model": model_name,
+        "prompt": prompt,
+        "stream": False
+    }
 
     response = requests.post("http://localhost:11434/api/generate", headers=headers, data=json.dumps(data))
     return response
+
+# Define prompt functions for tasks
+TASKS = {
+    'task1': {
+        "style-default": prompt_default,
+        "style-1-shot": prompt_1_shot,
+        "style-few-shot": prompt_few_shot,
+        "style-cot": prompt_cot,
+    },
+    'task2': {
+        "style-default": prompt_task2_default,
+        "style-1-shot": prompt_task2_1_shot,
+        "style-few-shot": prompt_task2_few_shot,
+        "style-cot": prompt_task2_cot,
+    }
+}
 
 start = time.time()
 model_name = "codellama"
 df = collect_df()
 
-
-PROMPT_FUNCTIONS = {
-    "style-default": prompt_default,
-    "style-1-shot": prompt_1_shot,
-    "style-few-shot": prompt_few_shot,
-    "style-cot": prompt_cot,
-}
-
 df_result = pd.DataFrame()
-count=0
-for prompt_type, prompt_func in PROMPT_FUNCTIONS.items():
-    output = []
-    for i, row in df.iterrows():
-        count+= 1
-        print(f"Calling {count} of ... {len(df)} rows for {prompt_type} prompt")
-        if row['n_try_except'] == 1:
-            prompt = prompt_func(row['str_code_without_try_except'])
-        else:
-            prompt = prompt_func(row['func_body'])
+count = 0
 
-        response = call_llama(prompt=prompt)
-        logger.info(response.json())
-        logger.info(f'Generated {len(response.json())} tokens in {(time.time() - start):.2f} seconds')
-        output.append(response.json()['response'])
+for task, prompt_functions in TASKS.items():
+    print(f"Processing {task}...")
 
-    df_style = df.copy() 
-    df_style['prompt_type'] = prompt_type
-    df_style['llm_response'] = output
+    for prompt_type, prompt_func in prompt_functions.items():
+        output = []
+        if task == 'task1':
+            continue
+        for i, row in df.iterrows():
+            count += 1
+            print(f"Calling {count} of {len(df)} rows for {prompt_type} prompt of {task}")
+            if row['n_try_except'] == 1:
+                prompt = prompt_func(row['str_code_without_try_except'])
+            else:
+                prompt = prompt_func(row['func_body'])
 
-    df_result = pd.concat([df_result, df_style], ignore_index=True)
+            logger.info(f'PROMPT: {prompt}')
+            response = call_llama(prompt=prompt)
+            #logger.info(response.json())
+            logger.info(f'Generated {len(response.json())} tokens in {(time.time() - start):.2f} seconds')
+            logger.info('Response....' + response.json()['response'])
+            output.append(response.json()['response'])
 
-df_result.to_csv(f"{os.getcwd()}/new_flask_llm.csv", index=False)
+        df_style = df.copy() 
+        df_style['task'] = task
+        df_style['prompt_type'] = prompt_type
+        df_style['llm_response'] = output
+
+        df_result = pd.concat([df_result, df_style], ignore_index=True)
+
+        break
+
+df_result.to_csv(f"{os.getcwd()}/llm/new_flask_llm_results.csv", index=False)
