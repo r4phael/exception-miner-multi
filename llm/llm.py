@@ -153,6 +153,128 @@ def prompt_task2_cot(function):
     )
     return prompt
 
+def prompt_task3_default(function):
+    prompt = (
+        "You will be provided with a Python code snippet that may require exception handling.\n"
+        "Your task is to identify which specific exception(s) should be caught for this code.\n"
+        "Return only the name of the exception(s) that should be handled, separated by commas if multiple.\n\n"
+        f"<code>\n{function}\n</code>\n"
+    )
+    return prompt
+
+def prompt_task3_1_shot(function):
+    example_code = "result = 1 / n"
+    example_output = "ZeroDivisionError"
+    
+    prompt = (
+        "Here is an example of a Python code snippet and the exception it should handle:\n"
+        f"<code>\n{example_code}\n</code>\n"
+        f"Exception to handle: {example_output}\n\n"
+        "Now, for the following code, identify the exception(s) that should be handled:\n"
+        f"<code>\n{function}\n</code>\n"
+        "Return only the name of the exception(s), separated by commas if multiple.\n"
+    )
+    return prompt
+
+def prompt_task3_few_shot(function, num_shots=2):
+    examples = [
+        (
+            "open('file.txt', 'r')",
+            "FileNotFoundError"
+        ),
+        (
+            "value = int('not_a_number')",
+            "ValueError"
+        ),
+        (
+            "result = 1 / 0",
+            "ZeroDivisionError"
+        ),
+    ]
+
+    prompt = "Here are examples of Python code snippets and the exceptions they should handle:\n"
+    for example_code, example_output in examples[:num_shots]:
+        prompt += f"<code>\n{example_code}\n</code>\nException to handle: {example_output}\n\n"
+
+    prompt += (
+        "Now, identify the exception(s) that should be handled for the following code:\n"
+        f"<code>\n{function}\n</code>\n"
+        "Return only the name of the exception(s), separated by commas if multiple.\n"
+    )
+    return prompt
+
+def prompt_task3_cot(function):
+    prompt = (
+        "Analyze the following code step-by-step to determine which exception(s) should be handled:\n"
+        f"<code>\n{function}\n</code>\n"
+        "1. Identify the operations in the code that might raise exceptions.\n"
+        "2. For each operation, consider what type of exception it might raise.\n"
+        "3. Determine the most specific exception(s) that should be caught.\n"
+        "4. Return only the name(s) of the exception(s) that should be handled, separated by commas if multiple.\n"
+    )
+    return prompt
+
+def prompt_task4_default(function):
+    prompt = (
+        "You will be provided with a Python code snippet that may require exception handling.\n"
+        "Your task is to write only the exception handling block (the 'except' clause) that would be appropriate for this code.\n"
+        "Return only the exception handling code block, without the 'try' part.\n\n"
+        f"<code>\n{function}\n</code>\n"
+    )
+    return prompt
+
+def prompt_task4_1_shot(function):
+    example_code = "result = 1 / n"
+    example_output = "except ZeroDivisionError:\n    print('Division by zero is not allowed')"
+    
+    prompt = (
+        "Here is an example of a Python code snippet and its corresponding exception handling block:\n"
+        f"<code>\n{example_code}\n</code>\n"
+        f"Exception handling block:\n{example_output}\n\n"
+        "Now, for the following code, write only the appropriate exception handling block:\n"
+        f"<code>\n{function}\n</code>\n"
+        "Return only the exception handling code block, without the 'try' part.\n"
+    )
+    return prompt
+
+def prompt_task4_few_shot(function, num_shots=2):
+    examples = [
+        (
+            "open('file.txt', 'r')",
+            "except FileNotFoundError:\n    print('File not found')"
+        ),
+        (
+            "value = int('not_a_number')",
+            "except ValueError:\n    print('Invalid integer')"
+        ),
+        (
+            "import os\nos.remove('/path/to/file')",
+            "except OSError as e:\n    if e.errno == errno.ENOENT:\n        print('File not found')\n    elif e.errno == errno.EACCES:\n        print('Permission denied')\n    else:\n        print(f'Error: {e}')"
+        ),
+    ]
+
+    prompt = "Here are examples of Python code snippets and their corresponding exception handling blocks:\n"
+    for example_code, example_output in examples[:num_shots]:
+        prompt += f"<code>\n{example_code}\n</code>\nException handling block:\n{example_output}\n\n"
+
+    prompt += (
+        "Now, write only the appropriate exception handling block for the following code:\n"
+        f"<code>\n{function}\n</code>\n"
+        "Return only the exception handling code block, without the 'try' part.\n"
+    )
+    return prompt
+
+def prompt_task4_cot(function):
+    prompt = (
+        "Analyze the following code step-by-step to determine the appropriate exception handling block:\n"
+        f"<code>\n{function}\n</code>\n"
+        "1. Identify the operations in the code that might raise exceptions.\n"
+        "2. Determine the specific exceptions that these operations might raise.\n"
+        "3. Consider any special conditions or error messages that should be handled.\n"
+        "4. Write only the exception handling block (the 'except' clause) that would be appropriate for this code.\n"
+        "Return only the exception handling code block, without the 'try' part.\n"
+    )
+    return prompt
 
 def collect_df(functions=[]):
     for project in projects:
@@ -201,6 +323,18 @@ TASKS = {
         "style-1-shot": prompt_task2_1_shot,
         "style-few-shot": prompt_task2_few_shot,
         "style-cot": prompt_task2_cot,
+    },
+    'task3': {
+        "style-default": prompt_task3_default,
+        "style-1-shot": prompt_task3_1_shot,
+        "style-few-shot": prompt_task3_few_shot,
+        "style-cot": prompt_task3_cot,
+    },
+    'task4': {
+        "style-default": prompt_task4_default,
+        "style-1-shot": prompt_task4_1_shot,
+        "style-few-shot": prompt_task4_few_shot,
+        "style-cot": prompt_task4_cot,
     }
 }
 
@@ -216,7 +350,7 @@ for task, prompt_functions in TASKS.items():
 
     for prompt_type, prompt_func in prompt_functions.items():
         output = []
-        if task == 'task1':
+        if task in ['task1', 'task2', 'task3']:
             continue
         for i, row in df.iterrows():
             count += 1
@@ -240,6 +374,5 @@ for task, prompt_functions in TASKS.items():
 
         df_result = pd.concat([df_result, df_style], ignore_index=True)
 
-        break
 
 df_result.to_csv(f"{os.getcwd()}/llm/new_flask_llm_results.csv", index=False)
