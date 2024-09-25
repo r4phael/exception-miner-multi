@@ -276,7 +276,12 @@ def prompt_task4_cot(function):
     )
     return prompt
 
-def collect_df(functions=[]):
+ """
+ TODO: task 5 to evaluate if the LLM is able to create a test to exception handling code to test the exceptional behavior.
+ However, we need know how to evaluate if the exception test created by the developer is equivalent to the test created by the LLM.
+ """
+
+def collect_df(task):
     for project in projects:
         #filenames = glob.glob(f"../output/parser/*.csv")
         #df = pd.read_csv(f"../output/parser/{project}_stats.csv")
@@ -286,13 +291,15 @@ def collect_df(functions=[]):
 
     # for fun in df[df['n_try_except'] == 1].str_code_without_try_except.values:
     #     functions.append(fun)
-
-    pos_samples = df[df['n_try_except'] == 1]
-    #neg_samples = df[df['n_try_except'] == 0].sample(n=len(pos_samples), random_state=42)
     
-    return pos_samples
-    # concat and shuffle the DataFrame rows
-    #return pd.concat([pos_samples, neg_samples], ignore_index=True).sample(frac=1)
+    if task == 'task1':
+        pos_samples = df[df['n_try_except'] == 1]
+        neg_samples = df[df['n_try_except'] == 0].sample(n=len(pos_samples), random_state=42)
+    
+        # concat and shuffle the DataFrame rows
+        return pd.concat([pos_samples, neg_samples], ignore_index=True).sample(frac=1)
+    else:
+        return df[df['n_try_except'] == 1]
     # To test:
     # return pd.concat([pos_samples.sample(n=1), neg_samples.sample(n=1)], ignore_index=True)
 
@@ -340,8 +347,6 @@ TASKS = {
 
 start = time.time()
 model_name = "codellama"
-df = collect_df()
-
 df_result = pd.DataFrame()
 count = 0
 
@@ -350,8 +355,7 @@ for task, prompt_functions in TASKS.items():
 
     for prompt_type, prompt_func in prompt_functions.items():
         output = []
-        if task in ['task1', 'task2', 'task3']:
-            continue
+        df = collect_df(task)
         for i, row in df.iterrows():
             count += 1
             print(f"Calling {count} of {len(df)} rows for {prompt_type} prompt of {task}")

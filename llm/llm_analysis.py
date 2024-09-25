@@ -8,7 +8,7 @@ import re
 from difflib import SequenceMatcher
 
 # Load the dataset
-df = pd.read_csv("/home/r4ph/desenv/exception-miner-multi/llm/data/new_flask_llm_results.csv")
+df = pd.read_csv("/home/r4ph/desenv/exception-miner-multi/llm/new_flask_llm_results.csv")
 
 def extract_statements(code):
     try:
