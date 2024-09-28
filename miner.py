@@ -106,6 +106,32 @@ def __get_method_name(node):  # -> str | None:
         if child.type == 'identifier' or child.type == 'object_pattern':
             return child.text.decode("utf-8")
 
+def remove_try_except_blocks(func_body: str) -> str:
+    """
+    Remove all try-except blocks from the function body.
+    """
+    try:
+        # Parse the function body using the parser
+        tree = parser.parse(func_body.encode('utf-8'))
+        root_node = tree.root_node
+
+        # Traverse the tree to remove all try-except blocks
+        new_func_body = []
+        for child in root_node.children:
+            # Skip try-except blocks
+            if child.type == "try_statement":
+                continue
+            # Keep the rest of the code
+            new_func_body.append(child.text.decode("utf-8"))
+
+        # Join the remaining lines of code
+        return "\n".join(new_func_body).strip()
+    except Exception as e:
+        logger.warning(f"Error removing try-except blocks: {str(e)}")
+        return None
+
+
+
 def collect_parser(files, project_name, language, args):
     columnsLanguage = {
         "py": ["file", "function", "func_body", "str_uncaught_exceptions", "n_try_except", "n_try_pass", "n_finally",
@@ -123,6 +149,7 @@ def collect_parser(files, project_name, language, args):
              "n_instanceof_in_catch", "destructive_wrapping", "cause_in_catch", "n_cout_get_cause_in_catch"]
     }
 
+
     df = pd.DataFrame(
         columns=columnsLanguage[language["main"]]
     )
@@ -130,6 +157,7 @@ def collect_parser(files, project_name, language, args):
     file_stats = FileStats()
     pbar = tqdm(files)
     func_defs: List[str] = []  # List[Node] = []
+    
     for file_path in pbar:
         pbar.set_description(f"Processing {str(file_path)[-40:].ljust(40)}")
 
@@ -141,6 +169,7 @@ def collect_parser(files, project_name, language, args):
                     f"###### UnicodeDecodeError Error!!! file: {file_path}.\n{str(ex)}"
                 )
                 continue
+
         try:
             tree = parser.parse(content)
         except SyntaxError as ex:
@@ -150,24 +179,34 @@ def collect_parser(files, project_name, language, args):
             captures = get_function_defs(tree)
             for child in captures:
                 function_identifier = __get_method_name(child)
-                if function_identifier == 'test_build_error_handler':
-                    print("break point!")
+                
                 if function_identifier is None:
                     raise FunctionDefNotFoundException(
                         f'Function identifier not found:\n {child.text}')
+                
+                func_body = child.text.decode("utf-8")
+
+                # Remover blocos try-except da função
+                code_without_try_except = remove_try_except_blocks(func_body)
+
+                # Se nenhum bloco try-except for encontrado, deixar o campo vazio
+                if code_without_try_except == func_body:
+                    code_without_try_except = ""  # Não houve remoção
 
                 func_defs.append(function_identifier)
                 file_stats.metrics(child, file_path)
                 metrics = file_stats.get_metrics(child, tree)
+                
                 df = pd.concat(
                     [
                         pd.DataFrame(
                             [{
                                 "file": file_path,
-                                "function": __get_method_name(child),
-                                "func_body": child.text.decode("utf-8"),
+                                "function": function_identifier,
+                                "func_body": func_body,
                                 'str_uncaught_exceptions': '',
-                                **metrics                                
+                                "str_code_without_try_except": code_without_try_except,
+                                **metrics
                             }],
                             columns=df.columns,
                         ),
@@ -175,8 +214,10 @@ def collect_parser(files, project_name, language, args):
                     ],
                     ignore_index=True,
                 )
-    file_stats.num_files += len(files)
-    file_stats.num_functions += len(func_defs)
+
+    # Exportar o DataFrame com as colunas incluindo o código sem blocos try-except
+    os.makedirs(f"{args.output_dir}/parser/{language['main']}", exist_ok=True)
+    df.to_csv(f"{args.output_dir}/parser/{language['main']}/{project_name}_stats.csv", index=False)
 
     if language["main"] == 'py':
         #Call graph for python projects
